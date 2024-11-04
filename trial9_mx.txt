@@ -1,0 +1,91 @@
+// tests/unit/mixins/buttonMixins.spec.js
+import { shallowMount } from '@vue/test-utils';
+import buttonMixins from '@/common/mixins/buttonMixins';
+
+describe('buttonMixins', () => {
+  it('emits action with the correct event name', () => {
+    // Create a component that uses the mixin
+    const TestComponent = {
+      mixins: [buttonMixins],
+      template: '<div></div>',
+    };
+
+    const item = {
+      events: {
+        actionName: 'testAction',
+      },
+    };
+
+    const wrapper = shallowMount(TestComponent, {
+      propsData: { item },
+    });
+
+    // Call the mixin method directly
+    wrapper.vm.emitButtonFunction();
+
+    // Assert that the correct event was emitted
+    expect(wrapper.emitted().action).toBeTruthy();
+    expect(wrapper.emitted().action[0]).toEqual(['testAction']);
+  });
+});
+
+
+///////////// w/ localVue
+
+import { shallowMount, createLocalVue } from '@vue/test-utils';
+import buttonMixins from '@/common/mixins/buttonMixins';
+
+describe('buttonMixins', () => {
+  const localVue = createLocalVue();
+
+  it('emits the correct action when emitButtonFunction is called', () => {
+    const actionName = 'testAction';
+    const item = {
+      events: {
+        actionName: actionName,
+      },
+    };
+
+    const TestComponent = {
+      template: '<div></div>',
+      mixins: [buttonMixins],
+      props: {
+        item: { type: Object, required: true },
+      },
+    };
+
+    const wrapper = shallowMount(TestComponent, {
+      localVue,
+      propsData: {
+        item,
+      },
+    });
+
+    // Call the method
+    wrapper.vm.emitButtonFunction();
+
+    // Assert that the event is emitted with the correct action name
+    expect(wrapper.emitted('action')).toBeTruthy();
+    expect(wrapper.emitted('action')[0]).toEqual([actionName]);
+  });
+
+  it('should throw an error if item is not provided', () => {
+    const TestComponent = {
+      template: '<div></div>',
+      mixins: [buttonMixins],
+    };
+
+    // Expect an error to be thrown due to missing required prop
+    expect(() => {
+      shallowMount(TestComponent, { localVue });
+    }).toThrow();
+  });
+});
+
+
+-----------
+Test Isolation: When you don’t use localVue, the global Vue instance is modified. If your mixin relies on any global plugins or configurations, those may affect your tests.
+
+1. localVue allows you to create a fresh instance of Vue for each test, ensuring that the tests do not interfere with each other. This is particularly useful when using plugins or mixins that may modify the global Vue instance, preventing unexpected side effects.
+2. Avoiding Global Side Effects
+By using localVue, you can install plugins (like Vue Router, Vuex, etc.) or configure global settings for the test instance without affecting the global Vue instance. This keeps your tests clean and reduces the risk of state leakage between tests.

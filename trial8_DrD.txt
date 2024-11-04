@@ -1,0 +1,128 @@
+import { shallowMount } from '@vue/test-utils';
+import CommonDropdown from '@/components/CommonDropdown.vue';
+
+describe('CommonDropdown.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Select an option',
+      options: [
+        { text: 'Option 1', value: 'option1' },
+        { text: 'Option 2', value: 'option2' },
+        { text: 'Option 3', value: 'option3' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedOption',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonDropdown, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Select an option:');
+  });
+
+  it('renders the correct number of dropdown options', () => {
+    const dropdownOptions = wrapper.findAll('option');
+    expect(dropdownOptions.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected value when a dropdown option is changed', () => {
+    const selectElement = wrapper.find('select');
+
+    // Simulate selecting the first option
+    selectElement.setValue('option1');
+
+    // Check emitted value after selection
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedOption', value: 'option1' }]);
+
+    // Simulate selecting the second option
+    selectElement.setValue('option2');
+
+    // Check emitted value after second selection
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedOption', value: 'option2' }]);
+  });
+
+  it('initializes with no selected option', () => {
+    expect(wrapper.vm.selected).toBe(null);
+  });
+});
+
+
+///// w/ async and await
+
+import { shallowMount } from '@vue/test-utils';
+import CommonDropdown from '@/components/CommonDropdown.vue';
+
+describe('CommonDropdown.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Select an option',
+      options: [
+        { text: 'Option 1', value: 'option1' },
+        { text: 'Option 2', value: 'option2' },
+        { text: 'Option 3', value: 'option3' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedOption',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonDropdown, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Select an option:');
+  });
+
+  it('renders the correct number of dropdown options', () => {
+    const dropdownOptions = wrapper.findAll('option');
+    expect(dropdownOptions.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected value when a dropdown option is changed', async () => {
+    const selectElement = wrapper.find('select');
+
+    // Simulate selecting the first option
+    await selectElement.setValue('option1');
+
+    // Check emitted value after selection
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedOption', value: 'option1' }]);
+
+    // Simulate selecting the second option
+    await selectElement.setValue('option2');
+
+    // Check emitted value after second selection
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedOption', value: 'option2' }]);
+  });
+
+  it('initializes with no selected option', () => {
+    expect(wrapper.vm.selected).toBe(null);
+  });
+});
+
+

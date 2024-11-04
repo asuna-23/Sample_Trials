@@ -1,0 +1,319 @@
+import { shallowMount } from '@vue/test-utils';
+import CommonTextInput from '@/components/CommonTextInput.vue';
+
+describe('CommonTextInput.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Test Label',
+      placeholder: 'Enter text here',
+    },
+    directives: {
+      type: 'text',
+    },
+    data: {
+      saveAs: 'testKey',
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonTextInput, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the input with the correct label and placeholder', () => {
+    const label = wrapper.find('label');
+    const input = wrapper.find('input');
+
+    expect(label.text()).toBe('Test Label:');
+    expect(input.attributes('placeholder')).toBe('Enter text here');
+  });
+
+  it('updates textInputData on valid input', () => {
+    const input = wrapper.find('input');
+    input.setValue('ValidText');
+
+    // Simulate the change event
+    input.trigger('change');
+
+    expect(wrapper.vm.textInputData).toBe('ValidText');
+  });
+
+  it('prevents invalid keypress for text input', () => {
+    const input = wrapper.find('input');
+    const event = new KeyboardEvent('keypress', { key: '1' });
+
+    // Trigger the keypress event with an invalid character
+    input.element.dispatchEvent(event);
+    input.trigger('keypress', { key: '1' });
+
+    // Expect the textInputData to remain empty
+    expect(wrapper.vm.textInputData).toBe('');
+  });
+
+  it('allows valid keypress for text input', () => {
+    const input = wrapper.find('input');
+    const validEvent = new KeyboardEvent('keypress', { key: 'a' });
+
+    // Trigger the keypress event with a valid character
+    input.element.dispatchEvent(validEvent);
+    input.trigger('keypress', { key: 'a' });
+
+    // Update the value directly to simulate user input
+    input.setValue('a');
+    input.trigger('change');
+
+    // Expect the textInputData to be updated
+    expect(wrapper.vm.textInputData).toBe('a');
+  });
+
+  it('emits the correct value when input changes', () => {
+    const input = wrapper.find('input');
+    input.setValue('Some value');
+    input.trigger('change');
+
+    // Expect the emit event to have the correct data
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([
+      { key: 'testKey', value: 'Some value' },
+    ]);
+  });
+});
+
+
+////////////////////// w/ async and await
+
+import { shallowMount } from '@vue/test-utils';
+import CommonTextInput from '@/components/CommonTextInput.vue'; // Adjust the path as necessary
+
+describe('CommonTextInput.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonTextInput, {
+      props: {
+        item: {
+          display: {
+            label: 'Test Input',
+            placeholder: 'Enter text'
+          },
+          directives: {
+            type: 'text',
+            readOnly: false
+          },
+          data: {
+            saveAs: 'testInput'
+          }
+        }
+      }
+    });
+  });
+
+  it('renders correctly with given props', () => {
+    const label = wrapper.find('label');
+    const input = wrapper.find('input');
+
+    it('should have the correct label text', () => {
+      expect(label.text()).toBe('Test Input:');
+    });
+
+    it('should have the correct placeholder', () => {
+      expect(input.attributes('placeholder')).toBe('Enter text');
+    });
+  });
+
+  it('validates input correctly for text type', async () => {
+    const input = wrapper.find('input');
+
+    await input.setValue('validText');
+    it('should update textInputData correctly', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+
+    // Simulate a key press for an invalid character
+    const event = new KeyboardEvent('keypress', { key: '1' });
+    await input.trigger('keypress', { key: '1' });
+
+    it('should not change textInputData for invalid key press', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+
+    // Simulate a key press for a valid character
+    await input.trigger('keypress', { key: 'a' });
+    it('should allow valid character input', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+  });
+
+  it('prevents invalid input for number type', async () => {
+    await wrapper.setProps({
+      item: {
+        ...wrapper.props().item,
+        directives: { type: 'number', readOnly: false },
+      }
+    });
+
+    const input = wrapper.find('input');
+
+    // Simulate a key press for a valid number
+    await input.trigger('keypress', { key: '1' });
+    it('should set textInputData for valid number', () => {
+      expect(wrapper.vm.textInputData).toBe('');
+    });
+
+    // Set the input to a valid number
+    await input.setValue('123');
+    it('should update textInputData to valid number', () => {
+      expect(wrapper.vm.textInputData).toBe('123');
+    });
+
+    // Simulate a key press for an invalid character (letter)
+    await input.trigger('keypress', { key: 'a' });
+    it('should not change textInputData for invalid character', () => {
+      expect(wrapper.vm.textInputData).toBe('123');
+    });
+  });
+
+  it('emits the correct value when input changes', async () => {
+    const input = wrapper.find('input');
+    await input.setValue('some value');
+    await input.trigger('change');
+
+    it('should emit the addValue event with the correct payload', () => {
+      expect(wrapper.emitted().addValue).toBeTruthy();
+      expect(wrapper.emitted().addValue.length).toBe(1);
+      expect(wrapper.emitted().addValue[0]).toEqual([{ key: 'testInput', value: 'some value' }]);
+    });
+  });
+
+  it('trims input data before emitting', async () => {
+    const input = wrapper.find('input');
+    await input.setValue('   extra spaces   ');
+    await input.trigger('change');
+
+    it('should emit trimmed value', () => {
+      expect(wrapper.emitted().addValue[0][0].value).toBe('extra spaces');
+    });
+  });
+});
+
+
+//////////////////////
+
+import { shallowMount } from '@vue/test-utils';
+import CommonTextInput from '@/components/CommonTextInput.vue'; // Adjust the path as necessary
+
+describe('CommonTextInput.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonTextInput, {
+      props: {
+        item: {
+          display: {
+            label: 'Test Input',
+            placeholder: 'Enter text'
+          },
+          directives: {
+            type: 'text',
+            readOnly: false
+          },
+          data: {
+            saveAs: 'testInput'
+          }
+        }
+      }
+    });
+  });
+
+  it('renders correctly with given props', () => {
+    const label = wrapper.find('label');
+    const input = wrapper.find('input');
+
+    it('should have the correct label text', () => {
+      expect(label.text()).toBe('Test Input:');
+    });
+
+    it('should have the correct placeholder', () => {
+      expect(input.attributes('placeholder')).toBe('Enter text');
+    });
+  });
+
+  it('validates input correctly for text type', async () => {
+    const input = wrapper.find('input');
+
+    await input.setValue('validText');
+    it('should update textInputData correctly', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+
+    // Simulate a key press for an invalid character
+    const event = new KeyboardEvent('keypress', { key: '1' });
+    await input.trigger('keypress', { key: '1' });
+
+    it('should not change textInputData for invalid key press', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+
+    // Simulate a key press for a valid character
+    await input.trigger('keypress', { key: 'a' });
+    it('should allow valid character input', () => {
+      expect(wrapper.vm.textInputData).toBe('validText');
+    });
+  });
+
+  it('prevents invalid input for number type', async () => {
+    await wrapper.setProps({
+      item: {
+        ...wrapper.props().item,
+        directives: { type: 'number', readOnly: false },
+      }
+    });
+
+    const input = wrapper.find('input');
+
+    // Simulate a key press for a valid number
+    await input.trigger('keypress', { key: '1' });
+    it('should set textInputData for valid number', () => {
+      expect(wrapper.vm.textInputData).toBe('');
+    });
+
+    // Set the input to a valid number
+    await input.setValue('123');
+    it('should update textInputData to valid number', () => {
+      expect(wrapper.vm.textInputData).toBe('123');
+    });
+
+    // Simulate a key press for an invalid character (letter)
+    await input.trigger('keypress', { key: 'a' });
+    it('should not change textInputData for invalid character', () => {
+      expect(wrapper.vm.textInputData).toBe('123');
+    });
+  });
+
+  it('emits the correct value when input changes', async () => {
+    const input = wrapper.find('input');
+    await input.setValue('some value');
+    await input.trigger('change');
+
+    it('should emit the addValue event with the correct payload', () => {
+      expect(wrapper.emitted().addValue).toBeTruthy();
+      expect(wrapper.emitted().addValue.length).toBe(1);
+      expect(wrapper.emitted().addValue[0]).toEqual([{ key: 'testInput', value: 'some value' }]);
+    });
+  });
+
+  it('trims input data before emitting', async () => {
+    const input = wrapper.find('input');
+    await input.setValue('   extra spaces   ');
+    await input.trigger('change');
+
+    it('should emit trimmed value', () => {
+      expect(wrapper.emitted().addValue[0][0].value).toBe('extra spaces');
+    });
+  });
+});
+

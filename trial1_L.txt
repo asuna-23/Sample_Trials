@@ -1,0 +1,353 @@
+import { shallowMount } from '@vue/test-utils';
+import LibroDeFirmas from '@/components/LibroDeFirmas.vue'; // Adjust path as necessary
+
+describe('LibroDeFirmas.vue', () => {
+  let wrapper;
+  let friends;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas);
+    friends = [
+      { friendData: { email: { value: 'friend1@example.com' } } },
+      { friendData: { email: { value: 'friend2@example.com' } } },
+    ];
+    wrapper.vm.friends = friends; // Set initial friends
+  });
+
+  // Test for switchDisplay
+  it('should set isFormVisible to true when switchDisplay is called with "showForm"', () => {
+    wrapper.vm.switchDisplay('showForm');
+    expect(wrapper.vm.isFormVisible).toBe(true);
+  });
+
+  it('should set isFormVisible to false when switchDisplay is called with "showFriends"', () => {
+    wrapper.vm.switchDisplay('showFriends');
+    expect(wrapper.vm.isFormVisible).toBe(false);
+  });
+
+  // Test for pushToArrayFriends
+  it('should add a new friend to the array if they don’t exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'friend3@example.com' } } }
+    ];
+
+    wrapper.vm.pushToArrayFriends(newFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(3);
+    expect(wrapper.vm.friends[0].friendData.email.value).toBe('friend3@example.com');
+  });
+
+  it('should not add a friend if they already exist', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    wrapper.vm.pushToArrayFriends(existingFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(2); // No new friend added
+  });
+
+  // Test for isFriendExists
+  it('should return true if a friend with the same email exists', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    const result = wrapper.vm.isFriendExists(existingFriendDetails);
+
+    expect(result).toBe(true); // The friend exists
+  });
+
+  it('should return false if a friend with the same email does not exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'newfriend@example.com' } } }
+    ];
+
+    const result = wrapper.vm.isFriendExists(newFriendDetails);
+
+    expect(result).toBe(false); // The friend does not exist
+  });
+});
+
+
+//////////////////// w/ async and await
+
+import { shallowMount } from '@vue/test-utils';
+import LibroDeFirmas from '@/components/LibroDeFirmas.vue'; // adjust path as necessary
+
+describe('LibroDeFirmas.vue', () => {
+  let wrapper;
+  let friends;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas);
+    friends = [
+      { friendData: { email: { value: 'friend1@example.com' } } },
+      { friendData: { email: { value: 'friend2@example.com' } } },
+    ];
+  });
+
+  // Test for switchDisplay
+  it('should set isFormVisible to true when switchDisplay is called with "showForm"', async () => {
+    wrapper.vm.switchDisplay('showForm');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isFormVisible).toBe(true);
+  });
+
+  it('should set isFormVisible to false when switchDisplay is called with "showFriends"', async () => {
+    wrapper.vm.switchDisplay('showFriends');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isFormVisible).toBe(false);
+  });
+
+  // Test for pushToArrayFriends
+  it('should add a new friend to the array if they don’t exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'friend3@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    wrapper.vm.pushToArrayFriends(newFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(3);
+    expect(wrapper.vm.friends[0].friendData.email.value).toBe('friend3@example.com');
+  });
+
+  it('should not add a friend if they already exist', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    wrapper.vm.pushToArrayFriends(existingFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(2); // No new friend added
+  });
+
+  // Test for isFriendExists
+  it('should return true if a friend with the same email exists', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    const result = wrapper.vm.isFriendExists(existingFriendDetails);
+
+    expect(result).toBe(true); // The friend exists
+  });
+
+  it('should return false if a friend with the same email does not exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'newfriend@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    const result = wrapper.vm.isFriendExists(newFriendDetails);
+
+    expect(result).toBe(false); // The friend does not exist
+  });
+});
+
+
+
+/////////////////////
+
+import { shallowMount } from '@vue/test-utils'
+import LibroDeFirmas from '@/components/LibroDeFirmas.vue'  // Adjust the path accordingly
+
+describe('LibroDeFirmas.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas, {
+      stubs: ['registration-form', 'friend-list', 'common-button']  // Stubbing child components
+    });
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  // Test case for `switchDisplay` method
+  it('should toggle the display between form and friend list', async () => {
+    // Initially, `isFormVisible` should be false
+    expect(wrapper.vm.isFormVisible).toBe(false);
+    expect(wrapper.vm.heading).toBe('Mis Amigos');  // Should display 'Mis Amigos' by default
+
+    // Simulate showing the form
+    wrapper.vm.switchDisplay('showForm');
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.isFormVisible).toBe(true);
+    expect(wrapper.vm.heading).toBe('Mi Amigo Nuevo');  // Should display 'Mi Amigo Nuevo' when form is visible
+
+    // Simulate showing the friends list
+    wrapper.vm.switchDisplay('showFriends');
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.isFormVisible).toBe(false);
+    expect(wrapper.vm.heading).toBe('Mis Amigos');
+  });
+
+  // Test case for `pushToArrayFriends` method
+  it('should add a new friend to the friends array if not already registered', async () => {
+    const newFriend = [{
+      friendData: {
+        email: { value: 'test@example.com' },
+        name: { value: 'John Doe' }
+      }
+    }];
+
+    wrapper.vm.pushToArrayFriends(newFriend);
+    await wrapper.vm.$nextTick();
+
+    // Check if the new friend was added to the friends array
+    expect(wrapper.vm.friends.length).toBe(1);
+    expect(wrapper.vm.friends[0].friendData.email.value).toBe('test@example.com');
+  });
+
+  it('should not add a new friend if email already exists', async () => {
+    const existingFriend = [{
+      friendData: {
+        email: { value: 'existing@example.com' },
+        name: { value: 'Jane Doe' }
+      }
+    }];
+
+    // Add an existing friend
+    wrapper.vm.pushToArrayFriends(existingFriend);
+    await wrapper.vm.$nextTick();
+
+    // Try to add the same friend again
+    wrapper.vm.pushToArrayFriends(existingFriend);
+    await wrapper.vm.$nextTick();
+
+    // Ensure the friend was not added twice
+    expect(wrapper.vm.friends.length).toBe(1);
+    expect(wrapper.vm.friends[0].friendData.email.value).toBe('existing@example.com');
+  });
+
+  // Test case for `heading` computed property
+  it('should return correct heading based on `isFormVisible`', async () => {
+    expect(wrapper.vm.heading).toBe('Mis Amigos');  // Default heading
+
+    wrapper.setData({ isFormVisible: true });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.heading).toBe('Mi Amigo Nuevo');
+  });
+});
+
+
+///////////////////
+
+describe('LibroDeFirmas.vue - switchDisplay', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas);
+  });
+
+  it('should set isFormVisible to true when switchDisplay is called with "showForm"', async () => {
+    wrapper.vm.switchDisplay('showForm');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isFormVisible).toBe(true);
+  });
+
+  it('should set isFormVisible to false when switchDisplay is called with "showFriends"', async () => {
+    wrapper.vm.switchDisplay('showFriends');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isFormVisible).toBe(false);
+  });
+});
+
+describe('LibroDeFirmas.vue - pushToArrayFriends', () => {
+  let wrapper;
+  let friends;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas);
+    friends = [
+      { friendData: { email: { value: 'friend1@example.com' } } },
+      { friendData: { email: { value: 'friend2@example.com' } } },
+    ]; // local variable to simulate the friends array
+  });
+
+  it('should add a new friend to the array if they don’t exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'friend3@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    wrapper.vm.pushToArrayFriends(newFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(3);
+    expect(wrapper.vm.friends[0].friendData.email.value).toBe('friend3@example.com');
+  });
+
+  it('should not add a friend if they already exist', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    wrapper.vm.pushToArrayFriends(existingFriendDetails);
+
+    expect(wrapper.vm.friends.length).toBe(2); // No new friend added
+  });
+});
+
+
+describe('LibroDeFirmas.vue - isFriendExists', () => {
+  let wrapper;
+  let friends;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LibroDeFirmas);
+    friends = [
+      { friendData: { email: { value: 'friend1@example.com' } } },
+      { friendData: { email: { value: 'friend2@example.com' } } }
+    ]; // local variable for the friends array
+  });
+
+  it('should return true if a friend with the same email exists', () => {
+    const existingFriendDetails = [
+      { friendData: { email: { value: 'friend1@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    const result = wrapper.vm.isFriendExists(existingFriendDetails);
+
+    expect(result).toBe(true); // The friend exists
+  });
+
+  it('should return false if a friend with the same email does not exist', () => {
+    const newFriendDetails = [
+      { friendData: { email: { value: 'newfriend@example.com' } } }
+    ];
+
+    wrapper.vm.friends = friends;
+    const result = wrapper.vm.isFriendExists(newFriendDetails);
+
+    expect(result).toBe(false); // The friend does not exist
+  });
+});
+
+
+-------------------
+
+The test cases will function properly without the use of async and await in this specific context. Here's why:
+
+Synchronous Operations: The methods being tested (switchDisplay, pushToArrayFriends, and isFriendExists) do not rely on any asynchronous operations that would require waiting for state updates or DOM changes. They manipulate data directly on the component instance, and you can immediately assert the results after calling these methods.
+
+Immediate State Changes: The methods modify component data properties immediately. For instance:
+
+When you call switchDisplay, it directly sets isFormVisible based on the input parameter.
+pushToArrayFriends updates the friends array based on whether the new friend's email already exists.
+isFriendExists checks against the friends array and returns a boolean based on the current state of that array.
+No Dependency on DOM Rendering: Since these tests do not need to wait for Vue's reactivity system to update the DOM (which typically requires nextTick), you can directly assert the state of the component after invoking the methods.
+
+Summary
+As long as the operations performed in the methods are synchronous and do not involve any asynchronous behavior (like fetching data or waiting for Vue to render updates), you can confidently write and run the test cases without async and await. This simplifies the tests and makes them easier to understand while still accurately verifying the behavior of your component.
+
+If at any point you incorporate asynchronous behavior (e.g., if you eventually use axios to fetch data, or if some state change relies on promises), you would need to reintroduce async and await to handle those cases properly. But for the current implementation you've provided, the test cases are sound and functional without them.

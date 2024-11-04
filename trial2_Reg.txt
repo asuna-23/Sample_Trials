@@ -1,0 +1,583 @@
+import { shallowMount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+import { FORM_TEMPLATE } from '@/common/recipe/rRegistrationForm'
+
+describe('RegistrationForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegistrationForm)
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('should add data to formData object', () => {
+    const data = { key: 'fullname', value: 'John Doe' }
+    wrapper.vm.addFormData(data)
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe')
+  })
+
+  it('should push the friend data into the friends array and emit event', () => {
+    const friendData = { ...FORM_TEMPLATE }
+    wrapper.vm.handleAdd(friendData)
+    expect(wrapper.vm.theFriends).toHaveLength(1)
+    expect(wrapper.emitted().addFriend).toBeTruthy()
+    expect(wrapper.emitted().addFriend[0]).toEqual([[friendData]])
+  })
+
+  it('should reset form after adding friend', () => {
+    wrapper.vm.handleAdd({ ...FORM_TEMPLATE })
+    expect(wrapper.vm.formData).toEqual({
+      friendData: {
+        fullname: { label: 'Fullname', value: '' },
+        nickname: { label: 'Nickname', value: '' },
+        birthdate: { label: 'Birthdate', value: '' },
+        age: { label: 'Age', value: '' },
+        address: { label: 'Address', value: '' },
+        email: { label: 'Email', value: '' },
+        phoneNumber: { label: 'Phone Number', value: '' },
+        favoriteColor: { label: 'Favorite Color', value: '' },
+        favoriteFood: { label: 'Favorite Food', value: '' },
+        gender: { label: 'Gender', value: '' },
+        nativeLangauge: { label: 'Native Language', value: '' },
+        mottoInLife: { label: 'Motto in Life', value: '' },
+        loveLanguage: { label: 'Love Language', value: [] }
+      },
+      properties: {
+        showDetails: false,
+        isFavorite: false
+      }
+    })
+  })
+
+  it('should reset formData and theFriends when resetForm is called', () => {
+    wrapper.vm.theFriends.push({ fullname: 'John Doe' }) // Add a friend
+    wrapper.vm.resetForm()
+    expect(wrapper.vm.theFriends).toHaveLength(0)
+    expect(wrapper.vm.formData).toEqual({
+      friendData: {
+        fullname: { label: 'Fullname', value: '' },
+        nickname: { label: 'Nickname', value: '' },
+        birthdate: { label: 'Birthdate', value: '' },
+        age: { label: 'Age', value: '' },
+        address: { label: 'Address', value: '' },
+        email: { label: 'Email', value: '' },
+        phoneNumber: { label: 'Phone Number', value: '' },
+        favoriteColor: { label: 'Favorite Color', value: '' },
+        favoriteFood: { label: 'Favorite Food', value: '' },
+        gender: { label: 'Gender', value: '' },
+        nativeLangauge: { label: 'Native Language', value: '' },
+        mottoInLife: { label: 'Motto in Life', value: '' },
+        loveLanguage: { label: 'Love Language', value: [] }
+      },
+      properties: {
+        showDetails: false,
+        isFavorite: false
+      }
+    })
+  })
+
+  it('should return false for invalid fullname in validateData', () => {
+    const friendData = {
+      friendData: {
+        fullname: { value: '' }, // Invalid
+        nickname: { value: 'Nick' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 20 },
+        email: { value: 'test@example.com' },
+        mottoInLife: { value: 'Live and let live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+      }
+    }
+    expect(wrapper.vm.validateData(friendData, {})).toBe(false)
+  })
+
+  it('should return true for valid data in validateData', () => {
+    const friendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Johnny' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 20 },
+        email: { value: 'test@example.com' },
+        mottoInLife: { value: 'Live and let live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+      }
+    }
+    expect(wrapper.vm.validateData(friendData, {})).toBe(true)
+  })
+
+  it('should call showAlert with the correct message for invalid data', () => {
+    const alertMessage = { fullname: 'Invalid fullname' }
+    const friendData = {
+      friendData: {
+        fullname: { value: '' }, // Invalid
+        nickname: { value: 'Nick' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 20 },
+        email: { value: 'test@example.com' },
+        mottoInLife: { value: 'Live and let live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+      }
+    }
+    wrapper.vm.showAlert = jest.fn() // Mock showAlert
+    wrapper.vm.validateData(friendData, alertMessage)
+    expect(wrapper.vm.showAlert).toHaveBeenCalledWith(alertMessage.fullname)
+  })
+
+  it('should set isError to true and call alert in showAlert', () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+    const message = 'Test alert'
+    wrapper.vm.showAlert(message)
+    expect(wrapper.vm.isError).toBe(true)
+    expect(alertSpy).toHaveBeenCalledWith(message)
+    alertSpy.mockRestore() // Restore the original alert function
+  })
+})
+
+
+//////////////////////
+import { shallowMount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import { FORM_TEMPLATE } from '@/common/recipe/rRegistrationForm'
+
+describe('RegistrationForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegistrationForm)
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  // Test cases for addFormData function
+  describe('addFormData', () => {
+    it('should add data to formData object', () => {
+      const data = { key: 'fullname', value: 'John Doe' }
+      wrapper.vm.addFormData(data)
+      expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe')
+    })
+  })
+
+  // Test cases for handleAdd function
+  describe('handleAdd', () => {
+    it('should push the friend data into the friends array', () => {
+      const friendData = { ...FORM_TEMPLATE }
+      wrapper.vm.handleAdd(friendData)
+      expect(wrapper.vm.theFriends).toHaveLength(1)
+      expect(wrapper.vm.theFriends[0]).toEqual(friendData)
+    })
+
+    it('should emit addFriend event with the friends array', () => {
+      const friendData = { ...FORM_TEMPLATE }
+      wrapper.vm.handleAdd(friendData)
+      expect(wrapper.emitted().addFriend).toBeTruthy()
+      expect(wrapper.emitted().addFriend[0]).toEqual([[friendData]])
+    })
+
+    it('should reset form after adding friend', () => {
+      wrapper.vm.handleAdd({ ...FORM_TEMPLATE })
+      expect(wrapper.vm.formData).toEqual({
+        friendData: {
+          fullname: { label: 'Fullname', value: '' },
+          nickname: { label: 'Nickname', value: '' },
+          birthdate: { label: 'Birthdate', value: '' },
+          age: { label: 'Age', value: '' },
+          address: { label: 'Address', value: '' },
+          email: { label: 'Email', value: '' },
+          phoneNumber: { label: 'Phone Number', value: '' },
+          favoriteColor: { label: 'Favorite Color', value: '' },
+          favoriteFood: { label: 'Favorite Food', value: '' },
+          gender: { label: 'Gender', value: '' },
+          nativeLangauge: { label: 'Native Language', value: '' },
+          mottoInLife: { label: 'Motto in Life', value: '' },
+          loveLanguage: { label: 'Love Language', value: [] }
+        },
+        properties: {
+          showDetails: false,
+          isFavorite: false
+        }
+      })
+    })
+  })
+
+  // Test cases for resetForm function
+  describe('resetForm', () => {
+    it('should reset formData and theFriends', () => {
+      wrapper.vm.theFriends.push({ fullname: 'John Doe' }) // Add a friend
+      wrapper.vm.resetForm()
+      expect(wrapper.vm.theFriends).toHaveLength(0)
+      expect(wrapper.vm.formData).toEqual({
+        friendData: {
+          fullname: { label: 'Fullname', value: '' },
+          nickname: { label: 'Nickname', value: '' },
+          birthdate: { label: 'Birthdate', value: '' },
+          age: { label: 'Age', value: '' },
+          address: { label: 'Address', value: '' },
+          email: { label: 'Email', value: '' },
+          phoneNumber: { label: 'Phone Number', value: '' },
+          favoriteColor: { label: 'Favorite Color', value: '' },
+          favoriteFood: { label: 'Favorite Food', value: '' },
+          gender: { label: 'Gender', value: '' },
+          nativeLangauge: { label: 'Native Language', value: '' },
+          mottoInLife: { label: 'Motto in Life', value: '' },
+          loveLanguage: { label: 'Love Language', value: [] }
+        },
+        properties: {
+          showDetails: false,
+          isFavorite: false
+        }
+      })
+    })
+  })
+
+  // Test cases for validateData function
+  describe('validateData', () => {
+    it('should return false for invalid fullname', () => {
+      const friendData = {
+        friendData: {
+          fullname: { value: '' }, // Invalid
+          nickname: { value: 'Nick' },
+          birthdate: { value: '2000-01-01' },
+          age: { value: 20 },
+          email: { value: 'test@example.com' },
+          mottoInLife: { value: 'Live and let live' },
+          loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+        }
+      }
+      expect(wrapper.vm.validateData(friendData, {})).toBe(false)
+    })
+
+    it('should return true for valid data', () => {
+      const friendData = {
+        friendData: {
+          fullname: { value: 'John Doe' },
+          nickname: { value: 'Johnny' },
+          birthdate: { value: '2000-01-01' },
+          age: { value: 20 },
+          email: { value: 'test@example.com' },
+          mottoInLife: { value: 'Live and let live' },
+          loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+        }
+      }
+      expect(wrapper.vm.validateData(friendData, {})).toBe(true)
+    })
+
+    it('should call showAlert with the correct message for invalid data', () => {
+      const alertMessage = { fullname: 'Invalid fullname' }
+      const friendData = {
+        friendData: {
+          fullname: { value: '' }, // Invalid
+          nickname: { value: 'Nick' },
+          birthdate: { value: '2000-01-01' },
+          age: { value: 20 },
+          email: { value: 'test@example.com' },
+          mottoInLife: { value: 'Live and let live' },
+          loveLanguage: { value: ['Words of Affirmation', 'Quality Time', 'Acts of Service'] }
+        }
+      }
+      wrapper.vm.showAlert = jest.fn() // Mock showAlert
+      wrapper.vm.validateData(friendData, alertMessage)
+      expect(wrapper.vm.showAlert).toHaveBeenCalledWith(alertMessage.fullname)
+    })
+  })
+
+  // Test cases for showAlert function
+  describe('showAlert', () => {
+    it('should set isError to true and call alert', () => {
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+      const message = 'Test alert'
+      wrapper.vm.showAlert(message)
+      expect(wrapper.vm.isError).toBe(true)
+      expect(alertSpy).toHaveBeenCalledWith(message)
+      alertSpy.mockRestore() // Restore the original alert function
+    })
+  })
+})
+
+
+----------------- try this
+
+import { shallowMount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+
+describe('RegistrationForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegistrationForm)
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  test('renders the form with all components', () => {
+    const formElements = wrapper.findAllComponents({ name: 'component' })
+    expect(formElements.length).toBe(wrapper.vm.formProps.length)
+  })
+
+  test('addFormData method correctly updates formData', () => {
+    const mockData = { key: 'fullname', value: 'John Doe' }
+    wrapper.vm.addFormData(mockData)
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe')
+  })
+
+  test('validateData method returns false for invalid fullname', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: '' }, // Invalid empty fullname
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(false)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+
+  test('validateData method returns true for valid data', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' },
+        nativeLangauge: { value: 'English' },
+        loveLanguage: { value: ['Words', 'Gifts', 'Touch'] }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(true)
+    expect(wrapper.vm.isError).toBe(false)
+  })
+
+  test('handleAdd method pushes friend data and emits addFriend event', async () => {
+    const mockFriend = {
+      fullname: { value: 'John Doe' },
+      nickname: { value: 'Nick' }
+    }
+    wrapper.vm.handleAdd(mockFriend)
+    expect(wrapper.vm.theFriends).toContainEqual(mockFriend)
+    expect(wrapper.emitted().addFriend).toBeTruthy()
+  })
+
+  test('resetForm method resets the formData and componentKey', () => {
+    wrapper.vm.resetForm()
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('')
+    expect(wrapper.vm.componentKey).toBe(1) // Incremented key for resetting components
+  })
+
+  test('showAlert method displays the correct alert message', () => {
+    window.alert = jest.fn() // Mock window alert
+    const message = 'This is an error!'
+    wrapper.vm.showAlert(message)
+    expect(window.alert).toHaveBeenCalledWith(message)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+})
+
+
+/////////////////////
+
+import { shallowMount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+
+describe('RegistrationForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegistrationForm)
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  // Test case for rendering the form with all components
+  // This checks if the form correctly renders each component listed in `formProps`.
+  test('renders the form with all components', () => {
+    const formElements = wrapper.findAllComponents({ name: 'component' })
+    expect(formElements.length).toBe(wrapper.vm.formProps.length)
+  })
+
+  // Test case for `addFormData` method
+  // This verifies that the `addFormData` method updates the correct form field in `formData`.
+  test('addFormData method correctly updates formData', () => {
+    const mockData = { key: 'fullname', value: 'John Doe' }
+    wrapper.vm.addFormData(mockData)
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe')
+  })
+
+  // Test case for `validateData` method (invalid data)
+  // This tests if the `validateData` method returns `false` and sets `isError` to true when invalid data (empty fullname) is passed.
+  test('validateData method returns false for invalid fullname', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: '' }, // Invalid empty fullname
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(false)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+
+  // Test case for `validateData` method (valid data)
+  // This checks that `validateData` returns `true` and `isError` is `false` when valid data is passed.
+  test('validateData method returns true for valid data', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' },
+        nativeLangauge: { value: 'English' },
+        loveLanguage: { value: ['Words', 'Gifts', 'Touch'] }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(true)
+    expect(wrapper.vm.isError).toBe(false)
+  })
+
+  // Test case for `handleAdd` method
+  // This tests that `handleAdd` pushes new form data to `theFriends` array and emits the `addFriend` event.
+  test('handleAdd method pushes friend data and emits addFriend event', async () => {
+    const mockFriend = {
+      fullname: { value: 'John Doe' },
+      nickname: { value: 'Nick' }
+    }
+    wrapper.vm.handleAdd(mockFriend)
+    expect(wrapper.vm.theFriends).toContainEqual(mockFriend)
+    expect(wrapper.emitted().addFriend).toBeTruthy()
+  })
+
+  // Test case for `resetForm` method
+  // This ensures that `resetForm` resets the form data and increments `componentKey`.
+  test('resetForm method resets the formData and componentKey', () => {
+    wrapper.vm.resetForm()
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('')
+    expect(wrapper.vm.componentKey).toBe(1) // Incremented key for resetting components
+  })
+
+  // Test case for `showAlert` method
+  // This checks if `showAlert` properly displays the alert message and sets `isError` to `true`.
+  test('showAlert method displays the correct alert message', () => {
+    window.alert = jest.fn() // Mock window alert
+    const message = 'This is an error!'
+    wrapper.vm.showAlert(message)
+    expect(window.alert).toHaveBeenCalledWith(message)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+})
+
+
+
+/////////////////////
+
+import { mount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+
+describe('RegistrationForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(RegistrationForm)
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  test('renders the form with all components', () => {
+    const formElements = wrapper.findAllComponents({ name: 'component' })
+    expect(formElements.length).toBe(wrapper.vm.formProps.length)
+  })
+
+  test('addFormData method correctly updates formData', async () => {
+    const mockData = { key: 'fullname', value: 'John Doe' }
+    wrapper.vm.addFormData(mockData)
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe')
+  })
+
+  test('validateData method returns false for invalid fullname', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: '' }, // Invalid empty fullname
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(false)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+
+  test('validateData method returns true for valid data', () => {
+    const mockFriendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Nick' },
+        birthdate: { value: '1995-05-10' },
+        age: { value: 25 },
+        email: { value: 'john.doe@example.com' },
+        phoneNumber: { value: '1234567890' },
+        gender: { value: 'Male' },
+        nativeLangauge: { value: 'English' },
+        loveLanguage: { value: ['Words', 'Gifts', 'Touch'] }
+      }
+    }
+    const result = wrapper.vm.validateData(mockFriendData, wrapper.vm.alertMessage)
+    expect(result).toBe(true)
+    expect(wrapper.vm.isError).toBe(false)
+  })
+
+  test('handleAdd method pushes friend data and emits addFriend event', async () => {
+    const mockFriend = {
+      fullname: { value: 'John Doe' },
+      nickname: { value: 'Nick' }
+    }
+    wrapper.vm.handleAdd(mockFriend)
+    expect(wrapper.vm.theFriends).toContainEqual(mockFriend)
+    expect(wrapper.emitted().addFriend).toBeTruthy()
+  })
+
+  test('resetForm method resets the formData and componentKey', () => {
+    wrapper.vm.resetForm()
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('')
+    expect(wrapper.vm.componentKey).toBe(1) // Incremented key for resetting components
+  })
+
+  test('showAlert method displays the correct alert message', () => {
+    window.alert = jest.fn() // Mock window alert
+    const message = 'This is an error!'
+    wrapper.vm.showAlert(message)
+    expect(window.alert).toHaveBeenCalledWith(message)
+    expect(wrapper.vm.isError).toBe(true)
+  })
+})

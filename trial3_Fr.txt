@@ -1,0 +1,294 @@
+import { shallowMount } from '@vue/test-utils'
+import FriendList from '@/components/FriendList.vue'
+
+describe('FriendList.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(FriendList, {
+      props: {
+        friendlist: []
+      }
+    });
+  });
+
+  test('renders a message when friendlist is empty', () => {
+    expect(wrapper.text()).toContain('You have no friends yet. Please add a friend.');
+  });
+
+  test('renders the list of friends correctly', () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      },
+      {
+        friendData: { fullname: { value: 'Jane Smith' } },
+        properties: { isFavorite: true, showDetails: true }
+      }
+    ];
+    
+    // Set props for friendlist
+    wrapper.setProps({ friendlist: friends });
+
+    // Find all friend titles
+    const friendTitles = wrapper.findAll('h3.text-break');
+    expect(friendTitles.length).toBe(2);
+    expect(friendTitles[0].text()).toBe('JOHN DOE');
+    expect(friendTitles[1].text()).toBe('JANE SMITH');
+  });
+
+  test('toggles details when toggleDetails is called', () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    // Set props for friendlist
+    wrapper.setProps({ friendlist: friends });
+
+    // Assert initial state
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(false);
+
+    // Call the method directly
+    wrapper.vm.toggleDetails(0);
+
+    // Assert updated state
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(true);
+  });
+
+  test('toggles favorite status when toggleFavorite is called', () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    // Set props for friendlist
+    wrapper.setProps({ friendlist: friends });
+
+    // Assert initial state
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(false);
+
+    // Call the method directly
+    wrapper.vm.toggleFavorite(0);
+
+    // Assert updated state
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(true);
+  });
+
+  test('removes a friend when removeThisFriend is called', () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+
+    // Set props for friendlist
+    wrapper.setProps({ friendlist: friends });
+
+    // Assert initial length
+    expect(wrapper.vm.friendlist.length).toBe(1);
+
+    // Call the method directly
+    wrapper.vm.removeThisFriend(0);
+
+    // Assert updated length
+    expect(wrapper.vm.friendlist.length).toBe(0);
+  });
+});
+
+
+
+-------------------- try this w/ async and await
+
+import { shallowMount } from '@vue/test-utils'
+import FriendList from '@/components/FriendList.vue'
+
+describe('FriendList.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(FriendList, {
+      props: {
+        friendlist: []
+      }
+    });
+  });
+
+  test('renders a message when friendlist is empty', () => {
+    expect(wrapper.text()).toContain('You have no friends yet. Please add a friend.');
+  });
+
+  test('renders the list of friends correctly', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      },
+      {
+        friendData: { fullname: { value: 'Jane Smith' } },
+        properties: { isFavorite: true, showDetails: true }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    const friendTitles = wrapper.findAll('h3.text-break');
+    expect(friendTitles.length).toBe(2);
+    expect(friendTitles[0].text()).toBe('JOHN DOE');
+    expect(friendTitles[1].text()).toBe('JANE SMITH');
+  });
+
+  test('toggles details when toggleDetails is called', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    // Assert initial state
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(false);
+
+    // Call the method directly
+    wrapper.vm.toggleDetails(0);
+
+    // Assert updated state
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(true);
+  });
+
+  test('toggles favorite status when toggleFavorite is called', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    // Assert initial state
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(false);
+
+    // Call the method directly
+    wrapper.vm.toggleFavorite(0);
+
+    // Assert updated state
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(true);
+  });
+
+  test('removes a friend when removeThisFriend is called', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+
+    await wrapper.setProps({ friendlist: friends });
+
+    // Assert initial length
+    expect(wrapper.vm.friendlist.length).toBe(1);
+
+    // Call the method directly
+    wrapper.vm.removeThisFriend(0);
+
+    // Assert updated length
+    expect(wrapper.vm.friendlist.length).toBe(0);
+  });
+});
+
+
+
+//////////////////
+
+import { shallowMount } from '@vue/test-utils'
+import FriendList from '@/components/FriendList.vue'
+
+describe('FriendList.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(FriendList, {
+      props: {
+        friendlist: []
+      }
+    });
+  });
+
+  test('renders a message when friendlist is empty', () => {
+    expect(wrapper.text()).toContain('You have no friends yet. Please add a friend.');
+  });
+
+  test('renders the list of friends correctly', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      },
+      {
+        friendData: { fullname: { value: 'Jane Smith' } },
+        properties: { isFavorite: true, showDetails: true }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    const friendTitles = wrapper.findAll('h3.text-break');
+    expect(friendTitles.length).toBe(2);
+    expect(friendTitles[0].text()).toBe('JOHN DOE');
+    expect(friendTitles[1].text()).toBe('JANE SMITH');
+  });
+
+  test('toggles details when the eye button is clicked', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(false);
+    await wrapper.find('button.outline-info').trigger('click');
+    expect(wrapper.vm.friendlist[0].properties.showDetails).toBe(true);
+  });
+
+  test('toggles favorite status when the star button is clicked', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+    
+    await wrapper.setProps({ friendlist: friends });
+
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(false);
+    await wrapper.find('button.outline-warning').trigger('click');
+    expect(wrapper.vm.friendlist[0].properties.isFavorite).toBe(true);
+  });
+
+  test('removes a friend when the trash button is clicked', async () => {
+    const friends = [
+      {
+        friendData: { fullname: { value: 'John Doe' } },
+        properties: { isFavorite: false, showDetails: false }
+      }
+    ];
+
+    await wrapper.setProps({ friendlist: friends });
+
+    expect(wrapper.vm.friendlist.length).toBe(1);
+    await wrapper.find('button.outline-danger').trigger('click');
+    expect(wrapper.vm.friendlist.length).toBe(0);
+  });
+});

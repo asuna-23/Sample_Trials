@@ -1,0 +1,126 @@
+import { shallowMount } from '@vue/test-utils';
+import CommonCheckBox from '@/components/CommonCheckBox.vue';
+
+describe('CommonCheckBox.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Select your hobbies',
+      options: [
+        { text: 'Reading', value: 'reading' },
+        { text: 'Traveling', value: 'traveling' },
+        { text: 'Cooking', value: 'cooking' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedHobbies',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonCheckBox, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Select your hobbies:');
+  });
+
+  it('renders the correct number of checkbox options', () => {
+    const checkboxes = wrapper.findAll('input[type="checkbox"]');
+    expect(checkboxes.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected values when checkboxes are checked', async () => {
+    const checkboxes = wrapper.findAll('input[type="checkbox"]');
+
+    // Simulate checking the first checkbox
+    await checkboxes.at(0).setChecked();
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedHobbies', value: ['reading'] }]);
+
+    // Simulate checking the second checkbox
+    await checkboxes.at(1).setChecked();
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedHobbies', value: ['reading', 'traveling'] }]);
+
+    // Simulate unchecking the first checkbox
+    await checkboxes.at(0).setChecked(false);
+    expect(wrapper.emitted('addValue')[2]).toEqual([{ key: 'selectedHobbies', value: ['traveling'] }]);
+  });
+
+  it('initializes with no checked options', () => {
+    expect(wrapper.vm.checked).toEqual([]);
+  });
+});
+
+////////////////////// w/o async and await
+
+import { shallowMount } from '@vue/test-utils';
+import CommonCheckBox from '@/components/CommonCheckBox.vue';
+
+describe('CommonCheckBox.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Select your hobbies',
+      options: [
+        { text: 'Reading', value: 'reading' },
+        { text: 'Traveling', value: 'traveling' },
+        { text: 'Cooking', value: 'cooking' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedHobbies',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonCheckBox, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Select your hobbies:');
+  });
+
+  it('renders the correct number of checkbox options', () => {
+    const checkboxes = wrapper.findAll('input[type="checkbox"]');
+    expect(checkboxes.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected values when checkboxes are checked', () => {
+    const checkboxes = wrapper.findAll('input[type="checkbox"]');
+
+    // Simulate checking the first checkbox
+    checkboxes.at(0).setChecked();
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedHobbies', value: ['reading'] }]);
+
+    // Simulate checking the second checkbox
+    checkboxes.at(1).setChecked();
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedHobbies', value: ['reading', 'traveling'] }]);
+
+    // Simulate unchecking the first checkbox
+    checkboxes.at(0).setChecked(false);
+    expect(wrapper.emitted('addValue')[2]).toEqual([{ key: 'selectedHobbies', value: ['traveling'] }]);
+  });
+
+  it('initializes with no checked options', () => {
+    expect(wrapper.vm.checked).toEqual([]);
+  });
+});
+

@@ -1,0 +1,126 @@
+import { shallowMount } from '@vue/test-utils';
+import CommonRadioButton from '@/components/CommonRadioButton.vue';
+
+describe('CommonRadioButton.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Choose an option',
+      options: [
+        { text: 'Option 1', value: 'option1' },
+        { text: 'Option 2', value: 'option2' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedOption',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonRadioButton, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Choose an option:');
+  });
+
+  it('renders the correct number of radio options', () => {
+    const radioGroup = wrapper.findAll('input[type="radio"]');
+    expect(radioGroup.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected value when a radio button is changed', async () => {
+    const radioOption = wrapper.find('input[value="option1"]');
+
+    // Simulate selecting the first option
+    await radioOption.setChecked();
+
+    // Expect the emit event to be called with the correct payload
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedOption', value: 'option1' }]);
+
+    // Now select the second option
+    const secondRadioOption = wrapper.find('input[value="option2"]');
+    await secondRadioOption.setChecked();
+
+    // Expect the emit event to be called again with the updated value
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedOption', value: 'option2' }]);
+  });
+
+  it('initializes with no selected option', () => {
+    expect(wrapper.vm.checked).toBe('');
+  });
+});
+
+
+//////////////// w/o async and await
+
+import { shallowMount } from '@vue/test-utils';
+import CommonRadioButton from '@/components/CommonRadioButton.vue';
+
+describe('CommonRadioButton.vue', () => {
+  let wrapper;
+  const item = {
+    display: {
+      label: 'Choose an option',
+      options: [
+        { text: 'Option 1', value: 'option1' },
+        { text: 'Option 2', value: 'option2' },
+      ],
+    },
+    data: {
+      saveAs: 'selectedOption',
+    },
+    directives: {
+      required: true,
+    },
+  };
+
+  beforeEach(() => {
+    wrapper = shallowMount(CommonRadioButton, {
+      propsData: {
+        item,
+      },
+    });
+  });
+
+  it('renders the label correctly', () => {
+    const label = wrapper.find('label');
+    expect(label.text()).toBe('Choose an option:');
+  });
+
+  it('renders the correct number of radio options', () => {
+    const radioGroup = wrapper.findAll('input[type="radio"]');
+    expect(radioGroup.length).toBe(item.display.options.length);
+  });
+
+  it('emits the selected value when a radio button is changed', () => {
+    const radioOption1 = wrapper.find('input[value="option1"]');
+    const radioOption2 = wrapper.find('input[value="option2"]');
+
+    // Simulate selecting the first option
+    radioOption1.setChecked(); // Simulate the change event by setting it checked
+
+    // Check emitted value after first selection
+    expect(wrapper.emitted('addValue')).toBeTruthy();
+    expect(wrapper.emitted('addValue')[0]).toEqual([{ key: 'selectedOption', value: 'option1' }]);
+
+    // Simulate selecting the second option
+    radioOption2.setChecked(); // Change to the second radio option
+
+    // Check emitted value after second selection
+    expect(wrapper.emitted('addValue')[1]).toEqual([{ key: 'selectedOption', value: 'option2' }]);
+  });
+
+  it('initializes with no selected option', () => {
+    expect(wrapper.vm.checked).toBe('');
+  });
+});
