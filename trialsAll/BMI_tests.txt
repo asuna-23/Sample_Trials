@@ -1,0 +1,237 @@
+import { shallowMount } from '@vue/test-utils';
+import BMIConverter from '@/components/BMIConverter.vue';
+import BMIForm from '@/components/BMIForm.vue';
+import BMIComparison from '@/components/BMIComparison.vue';
+import CommonButton from '@/components/common/CommonButton.vue';
+
+describe('BMIConverter.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(BMIConverter);
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  it('renders the heading correctly', () => {
+    const heading = wrapper.find('h1');
+    expect(heading.text()).toBe('BMI COMPARISON');
+  });
+
+  it('renders the BMIForm component', () => {
+    const bmiForm = wrapper.findComponent(BMIForm);
+    expect(bmiForm.exists()).toBe(true);
+  });
+
+  it('renders the CommonButton components', () => {
+    const buttons = wrapper.findAllComponents(CommonButton);
+    expect(buttons.length).toBe(wrapper.vm.buttons.length);
+  });
+
+  it('calls computeBMI when compute button is clicked', async () => {
+    const computeButton = wrapper.vm.buttons.find(btn => btn.events.actionName === 'compute');
+    wrapper.setData({ formValues: { person1: { name: 'John', weight: 70, height: 175 }, person2: { name: 'Doe', weight: 60, height: 165 } } });
+
+    await wrapper.vm.getButtonFunction('compute', computeButton);
+    expect(wrapper.vm.isComputed).toBe(true);
+  });
+
+  it('shows an alert if the form is invalid on compute button click', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    const computeButton = wrapper.vm.buttons.find(btn => btn.events.actionName === 'compute');
+
+    await wrapper.vm.getButtonFunction('compute', computeButton);
+    expect(alertSpy).toHaveBeenCalledWith('Complete the details, special characters, 0 value or negative values are not accepted');
+    alertSpy.mockRestore();
+  });
+
+  it('computes BMI correctly', async () => {
+    wrapper.setData({
+      formValues: {
+        person1: { name: 'Alice', weight: 70, height: 175 },
+        person2: { name: 'Bob', weight: 85, height: 180 },
+      },
+    });
+    
+    await wrapper.vm.computeBMI();
+    
+    expect(wrapper.vm.bmiResults.person1.bmi).toBe('22.86'); // (70 / (175/100)^2)
+    expect(wrapper.vm.bmiResults.person2.bmi).toBe('26.23'); // (85 / (180/100)^2)
+  });
+
+  it('compares BMI results correctly', async () => {
+    wrapper.setData({
+      bmiResults: {
+        person1: { name: 'Alice', bmi: '22.86', classification: 'Normal weight' },
+        person2: { name: 'Bob', bmi: '26.23', classification: 'Overweight' },
+      },
+      isComputed: true,
+    });
+
+    await wrapper.vm.compareBMI();
+    
+    expect(wrapper.vm.comparisonMessage).toBe('Bob has greater BMI of 26.23 - Overweight');
+    expect(wrapper.vm.showComparison).toBe(true);
+  });
+
+  it('resets the form correctly', async () => {
+    wrapper.setData({ isComputed: true, showComparison: true });
+
+    await wrapper.vm.resetForm();
+
+    expect(wrapper.vm.isComputed).toBe(false);
+    expect(wrapper.vm.showComparison).toBe(false);
+    expect(wrapper.vm.formValues).toEqual(expect.objectContaining({
+      person1: expect.objectContaining({ name: '', weight: '', height: '' }),
+      person2: expect.objectContaining({ name: '', weight: '', height: '' }),
+    }));
+  });
+
+  it('dismisses the alert correctly', async () => {
+    wrapper.setData({ showComparison: true });
+    
+    await wrapper.vm.dissmissAlert();
+    
+    expect(wrapper.vm.showComparison).toBe(false);
+  });
+});
+
+
+/////////////////
+
+import { mount } from '@vue/test-utils'
+import BMIConverter from '@/components/BMIConverter.vue'
+import BMIForm from './BMIForm.vue'
+import BMIComparison from './BMIComparison.vue'
+import CommonButton from '@/components/common/CommonButton.vue'
+import { BMI_BUTTONS } from '@/common/recipe/rBMIButton'
+import { BMI_FORM_TEMPLATE, BMI_RESULTS } from '@/common/recipe/rBMI'
+
+jest.mock('./BMIForm.vue', () => ({
+  name: 'BMIForm',
+  template: '<div></div>'
+}))
+
+jest.mock('./BMIComparison.vue', () => ({
+  name: 'BMIComparison',
+  template: '<div></div>'
+}))
+
+jest.mock('@/components/common/CommonButton.vue', () => ({
+  name: 'CommonButton',
+  template: '<button @click="$emit(\'action\')">Button</button>'
+}))
+
+describe('BMIConverter.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(BMIConverter)
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders correctly with default data', () => {
+    expect(wrapper.find('h1').text()).toBe('BMI COMPARISON')
+    expect(wrapper.vm.formValues).toEqual(BMI_FORM_TEMPLATE)
+    expect(wrapper.vm.bmiResults).toEqual(BMI_RESULTS)
+    expect(wrapper.vm.showComparison).toBe(false)
+  })
+
+  it('validates the form correctly', () => {
+    wrapper.setData({
+      formValues: {
+        person1: { name: 'John Doe', weight: 70, height: 175 },
+        person2: { name: 'Jane Doe', weight: 60, height: 160 }
+      }
+    })
+    expect(wrapper.vm.validateForm()).toBe(true)
+
+    // Test invalid scenarios
+    wrapper.setData({
+      formValues: {
+        person1: { name: 'John', weight: 0, height: 175 },
+        person2: { name: 'Jane', weight: 60, height: 160 }
+      }
+    })
+    expect(wrapper.vm.validateForm()).toBe(false)
+
+    wrapper.setData({
+      formValues: {
+        person1: { name: 'John Doe', weight: 70, height: 175 },
+        person2: { name: '', weight: 60, height: 160 }
+      }
+    })
+    expect(wrapper.vm.validateForm()).toBe(false)
+  })
+
+  it('shows alert when the form is invalid', () => {
+    jest.spyOn(window, 'alert').mockImplementation(() => {})
+    wrapper.vm.getButtonFunction('compute')
+    expect(window.alert).toHaveBeenCalledWith('Complete the details, special characters, 0 value or negative values are not accepted')
+  })
+
+  it('computes BMI correctly', () => {
+    wrapper.setData({
+      formValues: {
+        person1: { name: 'John Doe', weight: 70, height: 175 },
+        person2: { name: 'Jane Doe', weight: 60, height: 160 }
+      }
+    })
+    
+    console.log = jest.fn()
+    wrapper.vm.computeBMI()
+
+    expect(wrapper.vm.isComputed).toBe(true)
+    expect(wrapper.vm.bmiResults.person1.bmi).toBe('22.86')
+    expect(wrapper.vm.bmiResults.person2.bmi).toBe('23.44')
+    expect(console.log).toHaveBeenCalled()
+  })
+
+  it('compares BMI results correctly', () => {
+    wrapper.setData({
+      bmiResults: {
+        person1: { name: 'John Doe', bmi: 22.86, classification: 'Normal weight' },
+        person2: { name: 'Jane Doe', bmi: 23.44, classification: 'Normal weight' }
+      }
+    })
+
+    wrapper.vm.compareBMI()
+
+    expect(wrapper.vm.comparisonMessage).toBe('Jane Doe has greater BMI of 23.44 - Normal weight')
+    expect(wrapper.vm.showComparison).toBe(true)
+  })
+
+  it('resets the form correctly', () => {
+    wrapper.setData({ isComputed: true, showComparison: true })
+
+    wrapper.vm.resetForm()
+
+    expect(wrapper.vm.isComputed).toBe(false)
+    expect(wrapper.vm.showComparison).toBe(false)
+    expect(wrapper.vm.componentKey).toBe(1)
+    expect(wrapper.vm.formValues).toEqual(BMI_FORM_TEMPLATE)
+    expect(wrapper.vm.bmiResults).toEqual(BMI_RESULTS)
+  })
+
+  it('dismisses alert correctly', () => {
+    wrapper.setData({ showComparison: true })
+    
+    wrapper.vm.dissmissAlert()
+
+    expect(wrapper.vm.showComparison).toBe(false)
+  })
+
+  it('toggles button state correctly', () => {
+    wrapper.vm.toggleDisable('compute')
+    expect(wrapper.vm.buttons[0].directives.disabled).toBe(false) // Assuming compute is the first button
+
+    wrapper.vm.toggleDisable('reset')
+    expect(wrapper.vm.buttons[0].directives.disabled).toBe(true) // Assuming reset is the second button
+  })
+})
+

@@ -1,0 +1,163 @@
+import { mount } from '@vue/test-utils'
+import BMIForm from '@/components/BMIForm.vue'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import { BMI_FORM_TEMPLATE } from '@/common/recipe/rBMITextInput'
+
+describe('BMIForm.vue', () => {
+  let wrapper
+  const mockFormValues = {
+    person1: {
+      name: '',
+      weight: '',
+      height: ''
+    },
+    person2: {
+      name: '',
+      weight: '',
+      height: ''
+    }
+  }
+
+  beforeEach(() => {
+    wrapper = mount(BMIForm, {
+      propsData: {
+        formValues: mockFormValues,
+        componentKey: 1 // Assuming componentKey is necessary
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders correctly with given formValues prop', () => {
+    expect(wrapper.exists()).toBe(true)
+    const cards = wrapper.findAll('base-card')
+    expect(cards.length).toBe(2) // There should be 2 cards for each person
+
+    // Check that the CommonTextInput components are rendered
+    const inputs = wrapper.findAllComponents(CommonTextInput)
+    expect(inputs.length).toBe(Object.keys(BMI_FORM_TEMPLATE.person1).length * 2) // 3 inputs for each person
+  })
+
+  it('renders the correct structure of the form', () => {
+    const titles = wrapper.findAll('h2')
+    expect(titles.at(0).text()).toBe('Person 1')
+    expect(titles.at(1).text()).toBe('Person 2')
+
+    const rows = wrapper.findAll('b-row')
+    expect(rows.length).toBe(2) // One row for each person
+  })
+
+  it('correctly adds form data for person1', async () => {
+    const inputName = wrapper.findAllComponents(CommonTextInput).at(0) // Name input for Person 1
+    await inputName.vm.$emit('addValue', { key: 'name', value: 'John Doe' })
+    expect(mockFormValues.person1.name).toBe('John Doe')
+
+    const inputWeight = wrapper.findAllComponents(CommonTextInput).at(1) // Weight input for Person 1
+    await inputWeight.vm.$emit('addValue', { key: 'weight', value: 70 })
+    expect(mockFormValues.person1.weight).toBe(70)
+
+    const inputHeight = wrapper.findAllComponents(CommonTextInput).at(2) // Height input for Person 1
+    await inputHeight.vm.$emit('addValue', { key: 'height', value: 1.75 })
+    expect(mockFormValues.person1.height).toBe(1.75)
+  })
+
+  it('correctly adds form data for person2', async () => {
+    const inputName = wrapper.findAllComponents(CommonTextInput).at(3) // Name input for Person 2
+    await inputName.vm.$emit('addValue', { key: 'name', value: 'Jane Smith' })
+    expect(mockFormValues.person2.name).toBe('Jane Smith')
+
+    const inputWeight = wrapper.findAllComponents(CommonTextInput).at(4) // Weight input for Person 2
+    await inputWeight.vm.$emit('addValue', { key: 'weight', value: 65 })
+    expect(mockFormValues.person2.weight).toBe(65)
+
+    const inputHeight = wrapper.findAllComponents(CommonTextInput).at(5) // Height input for Person 2
+    await inputHeight.vm.$emit('addValue', { key: 'height', value: 1.65 })
+    expect(mockFormValues.person2.height).toBe(1.65)
+  })
+
+  it('calls addFormData with correct arguments', async () => {
+    const addFormDataSpy = jest.spyOn(wrapper.vm, 'addFormData')
+    const input = wrapper.findAllComponents(CommonTextInput).at(0) // First input for Person 1
+
+    await input.vm.$emit('addValue', { key: 'name', value: 'John Doe' })
+
+    expect(addFormDataSpy).toHaveBeenCalledWith({ key: 'name', value: 'John Doe' }, 1)
+  })
+})
+
+
+
+////////////
+
+import { mount } from '@vue/test-utils'
+import BMIForm from '@/components/BMIForm.vue'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import { BMI_FORM_PROPERTIES } from '@/common/recipe/rBMITextInput'
+
+describe('BMIForm.vue', () => {
+  let wrapper
+  const mockFormValues = {
+    person1: {},
+    person2: {}
+  }
+
+  beforeEach(() => {
+    wrapper = mount(BMIForm, {
+      propsData: {
+        formValues: mockFormValues,
+        componentKey: 1 // Assuming componentKey is necessary
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders correctly with given formValues prop', () => {
+    expect(wrapper.exists()).toBe(true)
+    const cards = wrapper.findAll('base-card')
+    expect(cards.length).toBe(2) // There should be 2 cards for each person
+
+    // Check that the CommonTextInput components are rendered
+    const inputs = wrapper.findAllComponents(CommonTextInput)
+    expect(inputs.length).toBe(BMI_FORM_PROPERTIES.length * 2) // Assuming 2 persons
+  })
+
+  it('renders the correct structure of the form', () => {
+    const titles = wrapper.findAll('h2')
+    expect(titles.at(0).text()).toBe('Person 1')
+    expect(titles.at(1).text()).toBe('Person 2')
+
+    const rows = wrapper.findAll('b-row')
+    expect(rows.length).toBe(2) // One row for each person
+  })
+
+  it('correctly adds form data for person1', async () => {
+    const input = wrapper.findAllComponents(CommonTextInput).at(0) // First input for Person 1
+    await input.vm.$emit('addValue', { key: 'weight', value: 70 })
+
+    // Check if the formValues have been updated
+    expect(mockFormValues.person1.weight).toBe(70)
+  })
+
+  it('correctly adds form data for person2', async () => {
+    const input = wrapper.findAllComponents(CommonTextInput).at(BMI_FORM_PROPERTIES.length) // First input for Person 2
+    await input.vm.$emit('addValue', { key: 'height', value: 1.75 })
+
+    // Check if the formValues have been updated
+    expect(mockFormValues.person2.height).toBe(1.75)
+  })
+
+  it('calls addFormData with correct arguments', async () => {
+    const addFormDataSpy = jest.spyOn(wrapper.vm, 'addFormData')
+    const input = wrapper.findAllComponents(CommonTextInput).at(0)
+
+    await input.vm.$emit('addValue', { key: 'weight', value: 70 })
+
+    expect(addFormDataSpy).toHaveBeenCalledWith({ key: 'weight', value: 70 }, 1)
+  })
+})

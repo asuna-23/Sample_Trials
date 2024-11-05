@@ -1,0 +1,217 @@
+import { mount } from '@vue/test-utils';
+import TodoApp from './TodoApp.vue';
+
+jest.mock('@/components/common/CommonButton.vue', () => ({
+  name: 'CommonButton',
+  template: '<button @click="$emit(\'action\')">Action Button</button>',
+}));
+
+jest.mock('@/components/common/ToDoTextInput.vue', () => ({
+  name: 'ToDoTextInput',
+  props: ['item'],
+  template: '<input v-model="value" @input="$emit(\'addValue\', { value })"/>',
+  data() {
+    return {
+      value: ''
+    };
+  }
+}));
+
+describe('TodoApp.vue methods', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = mount(TodoApp);
+  });
+
+  it('validates input and shows alert for empty task', async () => {
+    wrapper.vm.validate();
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('No Added Task. Please input something on the textfield.');
+  });
+
+  it('adds a new task to the tasks array', async () => {
+    wrapper.setData({ newTask: { taskContent: 'New Task' } });
+    await wrapper.vm.validate();
+    expect(wrapper.vm.tasks).toHaveLength(1);
+    expect(wrapper.vm.tasks[0].taskContent).toBe('New Task');
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('New task added successfully!');
+  });
+
+  it('deletes a specific task', async () => {
+    wrapper.setData({ tasks: [{ taskContent: 'Task to delete' }] });
+    jest.spyOn(window, 'confirm').mockReturnValue(true); // Mock confirmation
+    await wrapper.vm.deleteTask(0);
+    expect(wrapper.vm.tasks).toHaveLength(0);
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('A task has been deleted.');
+  });
+
+  it('does not delete a task if confirmation is denied', async () => {
+    wrapper.setData({ tasks: [{ taskContent: 'Task to delete' }] });
+    jest.spyOn(window, 'confirm').mockReturnValue(false); // Deny confirmation
+    await wrapper.vm.deleteTask(0);
+    expect(wrapper.vm.tasks).toHaveLength(1); // Task should still exist
+  });
+
+  it('clears all tasks', async () => {
+    wrapper.setData({ tasks: [{ taskContent: 'Task 1' }, { taskContent: 'Task 2' }] });
+    jest.spyOn(window, 'confirm').mockReturnValue(true); // Mock confirmation
+    await wrapper.vm.clearAll();
+    expect(wrapper.vm.tasks).toHaveLength(0);
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('All tasks deleted!');
+  });
+
+  it('does not clear tasks if confirmation is denied', async () => {
+    wrapper.setData({ tasks: [{ taskContent: 'Task 1' }] });
+    jest.spyOn(window, 'confirm').mockReturnValue(false); // Deny confirmation
+    await wrapper.vm.clearAll();
+    expect(wrapper.vm.tasks).toHaveLength(1); // Task should still exist
+  });
+
+  it('clears all completed tasks', async () => {
+    wrapper.setData({
+      tasks: [
+        { taskContent: 'Task 1', done: true },
+        { taskContent: 'Task 2', done: false }
+      ]
+    });
+    jest.spyOn(window, 'confirm').mockReturnValue(true); // Mock confirmation
+    await wrapper.vm.clearAllCompleted();
+    expect(wrapper.vm.tasks).toHaveLength(1); // Only one task should remain
+    expect(wrapper.vm.tasks[0].taskContent).toBe('Task 2');
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('All completed tasks are cleared!');
+  });
+
+  it('does not clear completed tasks if confirmation is denied', async () => {
+    wrapper.setData({
+      tasks: [
+        { taskContent: 'Task 1', done: true },
+        { taskContent: 'Task 2', done: false }
+      ]
+    });
+    jest.spyOn(window, 'confirm').mockReturnValue(false); // Deny confirmation
+    await wrapper.vm.clearAllCompleted();
+    expect(wrapper.vm.tasks).toHaveLength(2); // Both tasks should still exist
+  });
+
+  it('shows alert message correctly', async () => {
+    wrapper.vm.showAlertMessage('Test Message');
+    expect(wrapper.vm.alertMessage).toBe('Test Message');
+    expect(wrapper.vm.showAlert).toBe(true);
+  });
+
+  it('dismisses alert after timeout', async () => {
+    jest.useFakeTimers();
+    wrapper.vm.showAlertMessage('Test Message');
+    wrapper.vm.dismissAlert();
+    jest.advanceTimersByTime(2000); // Advance timers to trigger timeout
+    expect(wrapper.vm.showAlert).toBe(false);
+    expect(wrapper.vm.alertMessage).toBe('');
+  });
+
+  it('executes appropriate button function', async () => {
+    const action = 'showFAQs';
+    await wrapper.vm.getButtonFunction(action);
+    expect(wrapper.vm.$refs['faqs-modal']).toBeTruthy(); // Ensure modal is shown
+  });
+
+  it('handles invalid button action gracefully', async () => {
+    const action = 'invalidAction';
+    window.alert = jest.fn(); // Mock alert
+    await wrapper.vm.getButtonFunction(action);
+    expect(window.alert).toHaveBeenCalledWith('Invalid action');
+  });
+});
+
+
+
+/////////////////
+
+import { mount } from '@vue/test-utils';
+import TodoApp from './TodoApp.vue';
+import CommonButton from '@/components/common/CommonButton.vue';
+import ToDoList from './ToDoList.vue';
+import ToDoTextInput from '@/components/common/ToDoTextInput.vue';
+import { TASK_TEXTINPUT, ADD_BUTTON, TO_DO_BUTTONS, NEW_TASK } from '@/common/recipe/rToDo';
+
+jest.mock('@/components/common/CommonButton.vue', () => ({
+  name: 'CommonButton',
+  template: '<button @click="$emit(\'action\')">Action Button</button>',
+}));
+
+jest.mock('@/components/common/ToDoTextInput.vue', () => ({
+  name: 'ToDoTextInput',
+  props: ['item'],
+  template: '<input v-model="value" @input="$emit(\'addValue\', { value })"/>',
+  data() {
+    return {
+      value: ''
+    };
+  }
+}));
+
+describe('TodoApp.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = mount(TodoApp);
+  });
+
+  it('renders the title correctly', () => {
+    const title = wrapper.find('h1');
+    expect(title.text()).toBe('TO DO');
+  });
+
+  it('shows alert when trying to add an empty task', async () => {
+    wrapper.vm.validate();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('No Added Task. Please input something on the textfield.');
+  });
+
+  it('adds a new task when input is valid', async () => {
+    wrapper.setData({ newTask: { taskContent: 'New Task' } });
+    await wrapper.vm.validate();
+    expect(wrapper.vm.tasks).toHaveLength(1);
+    expect(wrapper.vm.tasks[0].taskContent).toBe('New Task');
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('New task added successfully!');
+  });
+
+  it('deletes a task from the tasks array', async () => {
+    // Add a task first
+    wrapper.setData({ tasks: [{ taskContent: 'Task to delete' }] });
+    await wrapper.vm.deleteTask(0);
+    expect(wrapper.vm.tasks).toHaveLength(0);
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('A task has been deleted.');
+  });
+
+  it('clears all tasks', async () => {
+    wrapper.setData({ tasks: [{ taskContent: 'Task 1' }, { taskContent: 'Task 2' }] });
+    await wrapper.vm.clearAll();
+    expect(wrapper.vm.tasks).toHaveLength(0);
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('All tasks deleted!');
+  });
+
+  it('clears all completed tasks', async () => {
+    // Simulating completed tasks
+    wrapper.setData({ tasks: [{ taskContent: 'Task 1', done: true }, { taskContent: 'Task 2', done: false }] });
+    await wrapper.vm.clearAllCompleted();
+    expect(wrapper.vm.tasks).toHaveLength(1);
+    expect(wrapper.vm.tasks[0].taskContent).toBe('Task 2');
+    expect(wrapper.vm.showAlert).toBe(true);
+    expect(wrapper.vm.alertMessage).toBe('All completed tasks are cleared!');
+  });
+
+  it('shows FAQs modal when showFAQs is true', async () => {
+    wrapper.vm.getButtonFunction('showFAQs');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.$refs['faqs-modal']).toBeTruthy();
+  });
+});

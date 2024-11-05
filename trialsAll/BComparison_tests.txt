@@ -1,0 +1,124 @@
+import { mount } from '@vue/test-utils'
+import BMIResults from '@/components/BMIResults.vue'
+
+describe('BMIResults.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(BMIResults, {
+      propsData: {
+        bmiResults: [
+          {
+            name: 'John Doe',
+            bmi: '22.86',
+            classification: 'Normal weight'
+          },
+          {
+            name: 'Jane Doe',
+            bmi: '23.44',
+            classification: 'Normal weight'
+          }
+        ]
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders correctly with given bmiResults prop', () => {
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('h4').text()).toBe('Comparing the two Persons')
+
+    const cards = wrapper.findAll('b-card')
+    expect(cards.length).toBe(2)
+
+    // Alternative access using .wrappers
+    expect(cards[0].find('h3').text()).toBe('John Doe')
+    expect(cards[0].find('li').text()).toContain('BMI: 22.86')
+    expect(cards[0].find('li:nth-child(2)').text()).toContain('BMI Classification: Normal weight')
+
+    expect(cards[1].find('h3').text()).toBe('Jane Doe')
+    expect(cards[1].find('li').text()).toContain('BMI: 23.44')
+    expect(cards[1].find('li:nth-child(2)').text()).toContain('BMI Classification: Normal weight')
+  })
+
+  it('renders correctly when bmiResults is empty', () => {
+    wrapper.setProps({ bmiResults: [] })
+
+    const cards = wrapper.findAll('b-card')
+    expect(cards.length).toBe(0) // Should not render any cards
+  })
+
+  it('displays the correct structure of the component', () => {
+    expect(wrapper.find('div').exists()).toBe(true)
+    expect(wrapper.find('ul').exists()).toBe(true)
+    expect(wrapper.find('ul').findAll('li').length).toBe(2) // There are 2 list items per person
+  })
+})
+
+
+////////////////////
+
+
+import { mount } from '@vue/test-utils'
+import BMIResults from '@/components/BMIResults.vue'
+
+describe('BMIResults.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(BMIResults, {
+      propsData: {
+        bmiResults: [
+          {
+            name: 'John Doe',
+            bmi: '22.86',
+            classification: 'Normal weight'
+          },
+          {
+            name: 'Jane Doe',
+            bmi: '23.44',
+            classification: 'Normal weight'
+          }
+        ]
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders correctly with given bmiResults prop', () => {
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('h4').text()).toBe('Comparing the two Persons')
+
+    const cards = wrapper.findAll('b-card')
+    expect(cards.length).toBe(2)
+
+    expect(cards.at(0).find('h3').text()).toBe('John Doe')
+    expect(cards.at(0).find('li').text()).toContain('BMI: 22.86')
+    expect(cards.at(0).find('li:nth-child(2)').text()).toContain('BMI Classification: Normal weight')
+
+    expect(cards.at(1).find('h3').text()).toBe('Jane Doe')
+    expect(cards.at(1).find('li').text()).toContain('BMI: 23.44')
+    expect(cards.at(1).find('li:nth-child(2)').text()).toContain('BMI Classification: Normal weight')
+  })
+
+  it('renders correctly when bmiResults is empty', () => {
+    wrapper.setProps({ bmiResults: [] })
+
+    const cards = wrapper.findAll('b-card')
+    expect(cards.length).toBe(0) // Should not render any cards
+  })
+
+  it('displays the correct structure of the component', () => {
+    expect(wrapper.find('div').exists()).toBe(true)
+    expect(wrapper.find('ul').exists()).toBe(true)
+    expect(wrapper.find('ul').findAll('li').length).toBe(2) // There are 2 list items per person
+  })
+})
+
+

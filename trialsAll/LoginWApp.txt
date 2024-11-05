@@ -1,0 +1,358 @@
+// Log 
+
+<template>
+  <div class="login-container d-flex justify-content-center align-items-center">
+    <b-card class="login-card">
+      <b-tabs v-model="activeTab">
+        <!-- Login Tab -->
+        <b-tab title="Login">
+          <b-form @submit.prevent="login">
+            <b-form-group label="Email" label-for="loginEmail">
+              <b-form-input id="loginEmail" v-model="loginForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="loginPassword">
+              <b-form-input id="loginPassword" v-model="loginForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="primary">Login</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Register Tab -->
+        <b-tab title="Register">
+          <b-form @submit.prevent="register">
+            <b-form-group label="Email" label-for="registerEmail">
+              <b-form-input id="registerEmail" v-model="registerForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="registerPassword">
+              <b-form-input id="registerPassword" v-model="registerForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="success">Register</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Manage Account Tab -->
+        <b-tab title="Manage Account" v-if="isLoggedIn">
+          <h5>Manage Your Account</h5>
+          <p>Logged in as: <strong>{{ loggedInUser.email }}</strong></p>
+
+          <b-button variant="danger" @click="deleteAccount">Delete Account</b-button>
+        </b-tab>
+      </b-tabs>
+    </b-card>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      activeTab: 0, // 0 = Login tab, 1 = Register tab, 2 = Manage Account tab
+      isLoggedIn: false, // Tracks the login state
+      loginForm: {
+        email: '',
+        password: ''
+      },
+      registerForm: {
+        email: '',
+        password: ''
+      },
+      users: [
+        // Sample users for testing
+        { email: 'john@example.com', password: '12345' },
+        { email: 'jane@example.com', password: 'abcde' }
+      ],
+      loggedInUser: null // Stores the currently logged-in user's details
+    };
+  },
+  methods: {
+    login() {
+      const user = this.users.find(
+        u => u.email === this.loginForm.email && u.password === this.loginForm.password
+      );
+      if (user) {
+        this.loggedInUser = user; // Store the logged-in user's data
+        this.isLoggedIn = true;
+        alert('Login successful!');
+        this.activeTab = 2; // Switch to the 'Manage Account' tab
+        this.$emit('login-success'); // Trigger the parent to show the app after login
+      } else {
+        alert('Invalid login credentials!');
+      }
+    },
+    register() {
+      const userExists = this.users.find(u => u.email === this.registerForm.email);
+      if (!userExists) {
+        this.users.push({ ...this.registerForm });
+        alert('Account successfully registered!');
+        this.activeTab = 0; // Switch to login tab after successful registration
+      } else {
+        alert('User already exists!');
+      }
+    },
+    deleteAccount() {
+      // Allow only the logged-in user to delete their own account
+      const userIndex = this.users.findIndex(u => u.email === this.loggedInUser.email);
+      if (userIndex > -1) {
+        this.users.splice(userIndex, 1); // Remove the user from the array
+        alert('Account deleted successfully!');
+        this.isLoggedIn = false; // Log the user out after deletion
+        this.loggedInUser = null; // Clear the logged-in user data
+        this.activeTab = 0; // Switch to login tab
+        this.loginForm.email = ''; // Clear login form after deletion
+        this.loginForm.password = '';
+        this.$emit('login-failed'); // Inform parent component that the user is logged out
+      } else {
+        alert('Error: Unable to find the account.');
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.login-container {
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+.login-card {
+  width: 400px;
+  padding: 20px;
+}
+</style>
+
+
+// App
+
+<template>
+  <div>
+    <!-- Show LoginComponent if the user is not logged in -->
+    <LoginComponent v-if="!isLoggedIn" @login-success="handleLoginSuccess" @login-failed="handleLoginFailed" />
+
+    <!-- Show the rest of the app when the user is logged in -->
+    <div v-else>
+      <b-navbar toggleable="lg" type="dark" variant="dark" sticky="top" class="text-center">
+        <b-navbar-toggle target="navbar-toggle-collapse">
+          <i class="bi bi-list text-light"></i>
+        </b-navbar-toggle>
+
+        <b-collapse id="navbar-toggle-collapse" is-nav>
+          <b-navbar-nav class="ml-auto">
+            <b-navbar-brand v-for="(route, id) in route" :key="id">
+              <common-route-link :is="route.componentName" :key="id" :item="route" />
+            </b-navbar-brand>
+          </b-navbar-nav>
+        </b-collapse>
+      </b-navbar>
+
+      <router-view />
+    </div>
+  </div>
+</template>
+
+<script>
+import LoginComponent from './components/LoginComponent.vue';
+import { ROUTES_PROPERTIES } from './common/recipe/rRoutes';
+import CommonRouteLink from './components/common/CommonRouteLink.vue';
+
+export default {
+  name: 'app',
+  components: {
+    LoginComponent,
+    CommonRouteLink
+  },
+  data() {
+    return {
+      isLoggedIn: false, // Tracks the user's login state
+      route: [...ROUTES_PROPERTIES]
+    };
+  },
+  methods: {
+    handleLoginSuccess() {
+      this.isLoggedIn = true; // Show the main app when the user logs in
+    },
+    handleLoginFailed() {
+      this.isLoggedIn = false; // Return to login when the user logs out or deletes their account
+    }
+  }
+};
+</script>
+
+
+
+// Initial Login w/ delete
+
+<template>
+  <div class="login-container d-flex justify-content-center align-items-center">
+    <b-card class="login-card">
+      <b-tabs v-model="activeTab">
+        <!-- Login Tab -->
+        <b-tab title="Login">
+          <b-form @submit.prevent="login">
+            <b-form-group label="Email" label-for="loginEmail">
+              <b-form-input id="loginEmail" v-model="loginForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="loginPassword">
+              <b-form-input id="loginPassword" v-model="loginForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="primary">Login</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Register Tab -->
+        <b-tab title="Register">
+          <b-form @submit.prevent="register">
+            <b-form-group label="Email" label-for="registerEmail">
+              <b-form-input id="registerEmail" v-model="registerForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="registerPassword">
+              <b-form-input id="registerPassword" v-model="registerForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="success">Register</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Manage Account Tab -->
+        <b-tab title="Manage Account" v-if="isLoggedIn">
+          <h5>Manage Your Account</h5>
+          <p>Logged in as: <strong>{{ loginForm.email }}</strong></p>
+
+          <b-button variant="danger" @click="deleteAccount">Delete Account</b-button>
+        </b-tab>
+      </b-tabs>
+    </b-card>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      activeTab: 0, // 0 = Login tab, 1 = Register tab, 2 = Manage Account tab
+      isLoggedIn: false, // Tracks the login state
+      loginForm: {
+        email: '',
+        password: ''
+      },
+      registerForm: {
+        email: '',
+        password: ''
+      },
+      users: [] // Simulating user data (later replace with real API)
+    };
+  },
+  methods: {
+    login() {
+      const user = this.users.find(
+        u => u.email === this.loginForm.email && u.password === this.loginForm.password
+      );
+      if (user) {
+        this.isLoggedIn = true;
+        alert('Login successful!');
+        this.activeTab = 2; // Switch to the 'Manage Account' tab
+        this.$emit('login-success'); // Trigger the parent to show the app after login
+      } else {
+        alert('Invalid login credentials!');
+      }
+    },
+    register() {
+      const userExists = this.users.find(u => u.email === this.registerForm.email);
+      if (!userExists) {
+        this.users.push({ ...this.registerForm });
+        alert('Account successfully registered!');
+        this.activeTab = 0; // Switch to login tab after successful registration
+      } else {
+        alert('User already exists!');
+      }
+    },
+    deleteAccount() {
+      const userIndex = this.users.findIndex(u => u.email === this.loginForm.email);
+      if (userIndex > -1) {
+        this.users.splice(userIndex, 1); // Remove the user from the array
+        alert('Account deleted successfully!');
+        this.isLoggedIn = false; // Log the user out
+        this.activeTab = 0; // Switch to login tab
+        this.loginForm.email = ''; // Clear form after deletion
+        this.loginForm.password = '';
+        this.$emit('login-failed'); // Inform parent that login failed (user deleted)
+      } else {
+        alert('Error: Unable to find user.');
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.login-container {
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+.login-card {
+  width: 400px;
+  padding: 20px;
+}
+</style>
+
+// App
+
+<template>
+  <div>
+    <!-- Show LoginComponent until the user is logged in -->
+    <LoginComponent v-if="!isLoggedIn" @login-success="handleLoginSuccess" @login-failed="handleLoginFailed" />
+
+    <!-- Show the rest of the app when logged in -->
+    <div v-else>
+      <b-navbar toggleable="lg" type="dark" variant="dark" sticky="top" class="text-center">
+        <b-navbar-toggle target="navbar-toggle-collapse">
+          <i class="bi bi-list text-light"></i>
+        </b-navbar-toggle>
+
+        <b-collapse id="navbar-toggle-collapse" is-nav>
+          <b-navbar-nav class="ml-auto">
+            <b-navbar-brand v-for="(route, id) in route" :key="id">
+              <common-route-link :is="route.componentName" :key="id" :item="route" />
+            </b-navbar-brand>
+          </b-navbar-nav>
+        </b-collapse>
+      </b-navbar>
+
+      <router-view />
+    </div>
+  </div>
+</template>
+
+<script>
+import LoginComponent from './components/LoginComponent.vue';
+import { ROUTES_PROPERTIES } from './common/recipe/rRoutes';
+import CommonRouteLink from './components/common/CommonRouteLink.vue';
+
+export default {
+  name: 'app',
+  components: {
+    LoginComponent,
+    CommonRouteLink
+  },
+  data() {
+    return {
+      isLoggedIn: false, // Track login status
+      route: [...ROUTES_PROPERTIES]
+    };
+  },
+  methods: {
+    handleLoginSuccess() {
+      this.isLoggedIn = true; // Show the app after successful login
+    },
+    handleLoginFailed() {
+      this.isLoggedIn = false; // Log the user out after deletion
+    }
+  }
+};
+</script>

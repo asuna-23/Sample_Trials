@@ -1,0 +1,188 @@
+import { mount } from '@vue/test-utils';
+import ToDoList from './ToDoList.vue';
+import Task from './Task.vue';
+
+jest.mock('./Task.vue', () => ({
+  name: 'Task',
+  props: ['task'],
+  template: '<div class="mock-task">Mock Task Component</div>',
+}));
+
+describe('ToDoList.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = mount(ToDoList, {
+      props: {
+        tasks: [],
+      },
+    });
+  });
+
+  it('renders a message when there are no tasks', () => {
+    const message = wrapper.find('.text-center');
+    expect(message.exists()).toBe(true);
+    expect(message.text()).toBe(" You haven't added new task yet! ");
+  });
+
+  it('does not show the message when tasks are present', async () => {
+    await wrapper.setProps({
+      tasks: [{ taskContent: 'Test Task 1', done: false }],
+    });
+    const message = wrapper.find('.text-center');
+    expect(message.exists()).toBe(false);
+  });
+
+  it('renders Task components for each task in the tasks array', async () => {
+    const tasks = [
+      { taskContent: 'Test Task 1', done: false },
+      { taskContent: 'Test Task 2', done: true },
+    ];
+    await wrapper.setProps({ tasks });
+    const taskComponents = wrapper.findAllComponents(Task);
+    expect(taskComponents.length).toBe(tasks.length);
+  });
+
+  it('emits deleteTask event with task ID when deleteTask is called', async () => {
+    const tasks = [
+      { taskContent: 'Test Task 1', done: false },
+      { taskContent: 'Test Task 2', done: true },
+    ];
+    await wrapper.setProps({ tasks });
+
+    await wrapper.vm.deleteTask(0);
+
+    expect(wrapper.emitted('deleteTask')).toBeTruthy();
+    expect(wrapper.emitted('deleteTask')[0]).toEqual([0]);
+  });
+
+  it('emits deleteTask event with correct ID when deleting a task', async () => {
+    const tasks = [
+      { taskContent: 'Task 1', done: false },
+      { taskContent: 'Task 2', done: true },
+    ];
+    await wrapper.setProps({ tasks });
+
+    await wrapper.vm.deleteTask(1);
+    expect(wrapper.emitted('deleteTask')[1]).toEqual([1]);
+  });
+});
+
+
+//////////----------- reg
+
+import { shallowMount } from '@vue/test-utils'
+import RegistrationForm from '@/components/RegistrationForm.vue'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import CommonButton from '@/components/common/CommonButton.vue'
+
+jest.mock('@/components/common/CommonTextInput.vue', () => ({
+  name: 'CommonTextInput',
+  template: '<input @input="$emit(\'addValue\', { key: \'fullname\', value: \'John Doe\' })" />'
+}));
+
+jest.mock('@/components/common/CommonButton.vue', () => ({
+  name: 'CommonButton',
+  template: '<button @click="$emit(\'action\')">Submit</button>'
+}));
+
+describe('RegistrationForm.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegistrationForm);
+  });
+
+  it('renders form and captures values from child components', async () => {
+    const textInput = wrapper.findComponent(CommonTextInput);
+    await textInput.vm.$emit('addValue', { key: 'fullname', value: 'John Doe' });
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe');
+  });
+
+  it('calls validateData and handles valid data', async () => {
+    const friendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Johnny' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 25 },
+        address: { value: '123 Main St' },
+        email: { value: 'john@example.com' },
+        phoneNumber: { value: '1234567890' },
+        favoriteColor: { value: 'blue' },
+        favoriteFood: { value: 'pizza' },
+        gender: { value: 'male' },
+        nativeLangauge: { value: 'English' },
+        mottoInLife: { value: 'Live and Let Live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Acts of Service', 'Quality Time'] }
+      }
+    };
+
+    await wrapper.vm.validateData(friendData, {});
+    expect(wrapper.vm.theFriends).toHaveLength(1);
+    expect(wrapper.vm.theFriends[0]).toEqual(expect.objectContaining({ friendData }));
+  });
+
+  it('calls validateData and handles invalid email', async () => {
+    const friendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Johnny' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 25 },
+        address: { value: '123 Main St' },
+        email: { value: 'invalid-email' },
+        phoneNumber: { value: '1234567890' },
+        favoriteColor: { value: 'blue' },
+        favoriteFood: { value: 'pizza' },
+        gender: { value: 'male' },
+        nativeLangauge: { value: 'English' },
+        mottoInLife: { value: 'Live and Let Live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Acts of Service', 'Quality Time'] }
+      }
+    };
+
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    const result = await wrapper.vm.validateData(friendData, { email: 'Invalid email' });
+    expect(result).toBe(false);
+    expect(alertSpy).toHaveBeenCalledWith('Invalid email');
+    alertSpy.mockRestore();
+  });
+
+  it('resets the form after submission', async () => {
+    const friendData = {
+      friendData: {
+        fullname: { value: 'John Doe' },
+        nickname: { value: 'Johnny' },
+        birthdate: { value: '2000-01-01' },
+        age: { value: 25 },
+        address: { value: '123 Main St' },
+        email: { value: 'john@example.com' },
+        phoneNumber: { value: '1234567890' },
+        favoriteColor: { value: 'blue' },
+        favoriteFood: { value: 'pizza' },
+        gender: { value: 'male' },
+        nativeLangauge: { value: 'English' },
+        mottoInLife: { value: 'Live and Let Live' },
+        loveLanguage: { value: ['Words of Affirmation', 'Acts of Service', 'Quality Time'] }
+      }
+    };
+
+    await wrapper.vm.validateData(friendData, {});
+    expect(wrapper.vm.theFriends).toHaveLength(1);
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('John Doe');
+
+    wrapper.vm.resetForm();
+    expect(wrapper.vm.theFriends).toHaveLength(0);
+    expect(wrapper.vm.formData.friendData.fullname.value).toBe('');
+  });
+
+  it('shows alert on invalid input', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    wrapper.vm.showAlert('This is an error');
+    expect(alertSpy).toHaveBeenCalledWith('This is an error');
+    expect(wrapper.vm.isError).toBe(true);
+    alertSpy.mockRestore();
+  });
+});
+

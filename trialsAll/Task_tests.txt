@@ -1,0 +1,65 @@
+import { mount } from '@vue/test-utils';
+import Task from './Task.vue';
+
+jest.mock('@/components/common/CommonButton.vue', () => ({
+  name: 'CommonButton',
+  template: '<button @click="$emit(\'action\')">Delete</button>',
+}));
+
+describe('Task.vue', () => {
+  let wrapper;
+  const mockTask = {
+    taskContent: 'Test Task',
+    done: false,
+  };
+
+  beforeEach(() => {
+    wrapper = mount(Task, {
+      props: {
+        task: mockTask,
+      },
+    });
+  });
+
+  it('renders task content correctly', () => {
+    const taskContent = wrapper.find('.task-content span');
+    expect(taskContent.text()).toBe(mockTask.taskContent);
+  });
+
+  it('initially has checkbox unchecked', () => {
+    const checkbox = wrapper.find('input[type="checkbox"]');
+    expect(checkbox.element.checked).toBe(false);
+  });
+
+  it('renders checkbox with correct done status', async () => {
+    await wrapper.setProps({ task: { ...mockTask, done: true } });
+    const checkbox = wrapper.find('input[type="checkbox"]');
+    expect(checkbox.element.checked).toBe(true);
+  });
+
+  it('applies line-through style when task is done', async () => {
+    await wrapper.setProps({ task: { ...mockTask, done: true } });
+    const taskContent = wrapper.find('.task-content span');
+    expect(taskContent.element.style.textDecoration).toBe('line-through');
+  });
+
+  it('applies no line-through style when task is not done', () => {
+    const taskContent = wrapper.find('.task-content span');
+    expect(taskContent.element.style.textDecoration).toBe('none');
+  });
+
+  it('emits delete-task event when delete button is clicked', async () => {
+    const deleteButton = wrapper.findComponent({ name: 'CommonButton' });
+    await deleteButton.vm.$emit('action');
+    expect(wrapper.emitted('delete-task')).toBeTruthy();
+  });
+
+  it('updates checkbox when task.done changes', async () => {
+    await wrapper.setProps({ task: { ...mockTask, done: true } });
+    const checkbox = wrapper.find('input[type="checkbox"]');
+    expect(checkbox.element.checked).toBe(true);
+    
+    await wrapper.setProps({ task: { ...mockTask, done: false } });
+    expect(checkbox.element.checked).toBe(false);
+  });
+});

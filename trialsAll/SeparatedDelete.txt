@@ -1,0 +1,242 @@
+// Initial log in with separate delete
+
+<!-- LoginComponent.vue -->
+<template>
+  <div class="login-container d-flex justify-content-center align-items-center">
+    <b-card class="login-card">
+      <b-tabs v-model="activeTab">
+        <!-- Login Tab -->
+        <b-tab title="Login">
+          <b-form @submit.prevent="login">
+            <b-form-group label="Email" label-for="loginEmail">
+              <b-form-input id="loginEmail" v-model="loginForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="loginPassword">
+              <b-form-input id="loginPassword" v-model="loginForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="primary">Login</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Register Tab -->
+        <b-tab title="Register">
+          <b-form @submit.prevent="register">
+            <b-form-group label="Email" label-for="registerEmail">
+              <b-form-input id="registerEmail" v-model="registerForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="registerPassword">
+              <b-form-input id="registerPassword" v-model="registerForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="success">Register</b-button>
+          </b-form>
+        </b-tab>
+      </b-tabs>
+    </b-card>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      activeTab: 0, // 0 = Login tab, 1 = Register tab
+      loginForm: {
+        email: '',
+        password: ''
+      },
+      registerForm: {
+        email: '',
+        password: ''
+      },
+      users: [] // Simulating user data (later replace with real API)
+    };
+  },
+  methods: {
+    login() {
+      const user = this.users.find(
+        u => u.email === this.loginForm.email && u.password === this.loginForm.password
+      );
+      if (user) {
+        this.$emit('login-success'); // Trigger the parent to show the app after login
+      } else {
+        alert('Invalid login credentials!');
+      }
+    },
+    register() {
+      const userExists = this.users.find(u => u.email === this.registerForm.email);
+      if (!userExists) {
+        this.users.push({ ...this.registerForm });
+        alert('Account successfully registered!');
+        this.activeTab = 0; // Switch to login tab after successful registration
+      } else {
+        alert('User already exists!');
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.login-container {
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+.login-card {
+  width: 400px;
+  padding: 20px;
+}
+</style>
+
+// delete
+
+<!-- Add Delete Button in LoginComponent.vue -->
+<b-tab title="Manage Account">
+  <b-button @click="deleteAccount" variant="danger">Delete Account</b-button>
+</b-tab>
+
+<script>
+export default {
+  methods: {
+    // Existing login and register methods...
+
+    deleteAccount() {
+      const userIndex = this.users.findIndex(u => u.email === this.loginForm.email);
+      if (userIndex > -1) {
+        this.users.splice(userIndex, 1);
+        alert('Account deleted!');
+        this.$emit('login-failed'); // Log the user out
+      } else {
+        alert('No account to delete!');
+      }
+    }
+  }
+};
+</script>
+
+
+
+// initial Login with delete
+
+<template>
+  <div class="login-container d-flex justify-content-center align-items-center">
+    <b-card class="login-card">
+      <b-tabs v-model="activeTab">
+        <!-- Login Tab -->
+        <b-tab title="Login">
+          <b-form @submit.prevent="login">
+            <b-form-group label="Email" label-for="loginEmail">
+              <b-form-input id="loginEmail" v-model="loginForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="loginPassword">
+              <b-form-input id="loginPassword" v-model="loginForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="primary">Login</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Register Tab -->
+        <b-tab title="Register">
+          <b-form @submit.prevent="register">
+            <b-form-group label="Email" label-for="registerEmail">
+              <b-form-input id="registerEmail" v-model="registerForm.email" type="email" required></b-form-input>
+            </b-form-group>
+
+            <b-form-group label="Password" label-for="registerPassword">
+              <b-form-input id="registerPassword" v-model="registerForm.password" type="password" required></b-form-input>
+            </b-form-group>
+
+            <b-button type="submit" variant="success">Register</b-button>
+          </b-form>
+        </b-tab>
+
+        <!-- Manage Account Tab -->
+        <b-tab title="Manage Account" v-if="isLoggedIn">
+          <h5>Manage Your Account</h5>
+          <p>Logged in as: <strong>{{ loginForm.email }}</strong></p>
+
+          <b-button variant="danger" @click="deleteAccount">Delete Account</b-button>
+        </b-tab>
+      </b-tabs>
+    </b-card>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      activeTab: 0, // 0 = Login tab, 1 = Register tab, 2 = Manage Account tab
+      isLoggedIn: false, // Tracks the login state
+      loginForm: {
+        email: '',
+        password: ''
+      },
+      registerForm: {
+        email: '',
+        password: ''
+      },
+      users: [] // Simulating user data (later replace with real API)
+    };
+  },
+  methods: {
+    login() {
+      const user = this.users.find(
+        u => u.email === this.loginForm.email && u.password === this.loginForm.password
+      );
+      if (user) {
+        this.isLoggedIn = true;
+        alert('Login successful!');
+        this.activeTab = 2; // Switch to the 'Manage Account' tab
+        this.$emit('login-success'); // Trigger the parent to show the app after login
+      } else {
+        alert('Invalid login credentials!');
+      }
+    },
+    register() {
+      const userExists = this.users.find(u => u.email === this.registerForm.email);
+      if (!userExists) {
+        this.users.push({ ...this.registerForm });
+        alert('Account successfully registered!');
+        this.activeTab = 0; // Switch to login tab after successful registration
+      } else {
+        alert('User already exists!');
+      }
+    },
+    deleteAccount() {
+      const userIndex = this.users.findIndex(u => u.email === this.loginForm.email);
+      if (userIndex > -1) {
+        this.users.splice(userIndex, 1); // Remove the user from the array
+        alert('Account deleted successfully!');
+        this.isLoggedIn = false; // Log the user out
+        this.activeTab = 0; // Switch to login tab
+        this.loginForm.email = ''; // Clear form after deletion
+        this.loginForm.password = '';
+        this.$emit('login-failed'); // Inform parent that login failed (user deleted)
+      } else {
+        alert('Error: Unable to find user.');
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.login-container {
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+.login-card {
+  width: 400px;
+  padding: 20px;
+}
+</style>
+
+// login with delete
+
+

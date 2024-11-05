@@ -1,0 +1,300 @@
+import { shallowMount } from '@vue/test-utils';
+import App from '@/App.vue';
+import LoginComponent from '@/components/LoginComponent.vue';
+import CommonRouteLink from '@/components/common/CommonRouteLink.vue';
+
+describe('App.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(App);
+  });
+
+  it('renders LoginComponent if user is not logged in', () => {
+    // Ensure the component is showing LoginComponent if not logged in
+    expect(wrapper.findComponent(LoginComponent).exists()).toBe(true);
+    expect(wrapper.find('b-navbar').exists()).toBe(false);
+  });
+
+  it('shows navbar and app content when user is logged in', async () => {
+    // Simulate a login success
+    await wrapper.vm.handleLoginSuccess({ email: 'john@example.com' });
+
+    // Navbar should be visible now
+    expect(wrapper.find('b-navbar').exists()).toBe(true);
+    expect(wrapper.findComponent(LoginComponent).exists()).toBe(false);
+  });
+
+  it('handles login success correctly', async () => {
+    const user = { email: 'john@example.com', password: '12345' };
+    await wrapper.vm.handleLoginSuccess(user);
+
+    // Check that the login state and logged-in user are set correctly
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+    expect(wrapper.vm.loggedInUser).toEqual(user);
+  });
+
+  it('handles login failure correctly', async () => {
+    await wrapper.vm.handleLoginFailed();
+
+    // Check that the login state is cleared on failure
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBe(null);
+  });
+
+  it('logs the user out correctly', async () => {
+    // Simulate login success first
+    await wrapper.vm.handleLoginSuccess({ email: 'john@example.com' });
+
+    // Call the logout method
+    wrapper.vm.logout();
+
+    // Check that the user is logged out
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBe(null);
+  });
+
+  it('deletes user account correctly', async () => {
+    // Simulate login success with a specific user
+    const user = { email: 'john@example.com', password: '12345' };
+    await wrapper.vm.handleLoginSuccess(user);
+
+    // Mock the confirm dialog to always return true
+    window.confirm = jest.fn(() => true);
+
+    // Call the deleteAccount method
+    wrapper.vm.deleteAccount();
+
+    // Check that the user was removed from the users array
+    expect(wrapper.vm.users.find(u => u.email === user.email)).toBeUndefined();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBe(null);
+  });
+
+  it('does not delete account if confirmation is rejected', async () => {
+    // Simulate login success
+    const user = { email: 'john@example.com', password: '12345' };
+    await wrapper.vm.handleLoginSuccess(user);
+
+    // Mock the confirm dialog to return false
+    window.confirm = jest.fn(() => false);
+
+    // Call the deleteAccount method
+    wrapper.vm.deleteAccount();
+
+    // Check that the user still exists and is still logged in
+    expect(wrapper.vm.users.find(u => u.email === user.email)).toBeDefined();
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+  });
+});
+
+
+////////////
+
+import { shallowMount } from '@vue/test-utils';
+import App from '@/App.vue';
+
+describe('App.vue Methods', () => {
+  beforeEach(() => {
+    window.alert = jest.fn(); // Mock alert for logout and deleteAccount
+    window.confirm = jest.fn(); // Mock confirm for deleteAccount
+  });
+
+  // Test cases for handleLoginSuccess
+  it('should set isLoggedIn to true and update loggedInUser with valid user in handleLoginSuccess', () => {
+    const wrapper = shallowMount(App);
+    const user = { email: 'john@example.com', password: '12345' };
+    
+    wrapper.vm.handleLoginSuccess(user);
+
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+    expect(wrapper.vm.loggedInUser).toEqual(user);
+  });
+
+  it('should not update loggedInUser if invalid user is provided in handleLoginSuccess', () => {
+    const wrapper = shallowMount(App);
+    
+    expect(() => {
+      wrapper.vm.handleLoginSuccess(null); // Passing an invalid user
+    }).toThrowError('Invalid user object');
+
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // Test cases for handleLoginFailed
+  it('should set isLoggedIn to false and clear loggedInUser in handleLoginFailed', () => {
+    const wrapper = shallowMount(App);
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.handleLoginFailed();
+
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  it('should work correctly when user is already logged out in handleLoginFailed', () => {
+    const wrapper = shallowMount(App);
+    wrapper.setData({ isLoggedIn: false, loggedInUser: null });
+
+    wrapper.vm.handleLoginFailed();
+
+    expect(wrapper.vm.isLoggedIn).toBe(false);  // No change expected
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // Test cases for logout
+  it('should log the user out and reset isLoggedIn and loggedInUser in logout', () => {
+    const wrapper = shallowMount(App);
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.logout();
+
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  it('should not change state if user is already logged out in logout', () => {
+    const wrapper = shallowMount(App);
+    wrapper.setData({ isLoggedIn: false, loggedInUser: null });
+
+    wrapper.vm.logout();
+
+    expect(wrapper.vm.isLoggedIn).toBe(false);  // No change expected
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  // Test cases for deleteAccount
+  it('should delete the user account and log them out if confirmed in deleteAccount', () => {
+    const wrapper = shallowMount(App);
+    const user = { email: 'john@example.com', password: '12345' };
+    wrapper.setData({ isLoggedIn: true, loggedInUser: user, users: [user] });
+
+    window.confirm.mockReturnValue(true); // User confirms deletion
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users.find(u => u.email === user.email)).toBeUndefined();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('Your account has been deleted successfully.');
+  });
+
+  it('should not delete the account if user cancels confirmation in deleteAccount', () => {
+    const wrapper = shallowMount(App);
+    const user = { email: 'john@example.com', password: '12345' };
+    wrapper.setData({ isLoggedIn: true, loggedInUser: user, users: [user] });
+
+    window.confirm.mockReturnValue(false); // User cancels deletion
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users.find(u => u.email === user.email)).toBeDefined();
+    expect(wrapper.vm.isLoggedIn).toBe(true);  // No logout
+    expect(wrapper.vm.loggedInUser).toEqual(user);  // User is still logged in
+    expect(window.alert).not.toHaveBeenCalledWith('Your account has been deleted successfully.');
+  });
+
+  it('should show an error if user account is not found in deleteAccount', () => {
+    const wrapper = shallowMount(App);
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'unknown@example.com' }, users: [] });
+
+    window.confirm.mockReturnValue(true); // User confirms deletion
+    wrapper.vm.deleteAccount();
+
+    expect(window.alert).toHaveBeenCalledWith('Error: Unable to find your account.');
+  });
+});
+
+
+////--------------- Log in
+
+import { shallowMount } from '@vue/test-utils';
+import LoginComponent from '@/components/LoginComponent.vue';
+
+describe('LoginComponent.vue Methods', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LoginComponent, {
+      propsData: {
+        users: [
+          { email: 'john@example.com', password: '12345' },
+          { email: 'jane@example.com', password: 'abcde' }
+        ]
+      }
+    });
+
+    window.alert = jest.fn(); // Mock alert
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks(); // Clear mocks after each test
+  });
+
+  // Test cases for login method
+  it('should emit "login-success" when correct credentials are provided in login method', async () => {
+    // Set valid login form data
+    wrapper.setData({
+      loginForm: { email: 'john@example.com', password: '12345' }
+    });
+
+    // Trigger login
+    await wrapper.vm.login();
+
+    // Expect the event to be emitted and alert to be called
+    expect(wrapper.emitted('login-success')).toBeTruthy();
+    expect(wrapper.emitted('login-success')[0]).toEqual([
+      { email: 'john@example.com', password: '12345' }
+    ]);
+    expect(window.alert).toHaveBeenCalledWith('Login successful!');
+  });
+
+  it('should emit "login-failed" when invalid credentials are provided in login method', async () => {
+    // Set invalid login form data
+    wrapper.setData({
+      loginForm: { email: 'invalid@example.com', password: 'wrongpass' }
+    });
+
+    // Trigger login
+    await wrapper.vm.login();
+
+    // Expect the event to be emitted and alert to be called
+    expect(wrapper.emitted('login-failed')).toBeTruthy();
+    expect(window.alert).toHaveBeenCalledWith('Invalid login credentials!');
+  });
+
+  // Test cases for register method
+  it('should emit "register" and switch to login tab when new user registers', async () => {
+    // Set registration form data with a new email
+    wrapper.setData({
+      registerForm: { email: 'newuser@example.com', password: 'newpassword' }
+    });
+
+    // Trigger register
+    await wrapper.vm.register();
+
+    // Expect the event to be emitted and alert to be called
+    expect(wrapper.emitted('register')).toBeTruthy();
+    expect(wrapper.emitted('register')[0]).toEqual([
+      { email: 'newuser@example.com', password: 'newpassword' }
+    ]);
+    expect(window.alert).toHaveBeenCalledWith('Account successfully registered!');
+    expect(wrapper.vm.activeTab).toBe(0); // Check if it switched to the login tab
+  });
+
+  it('should not emit "register" and show alert when trying to register an existing user', async () => {
+    // Set registration form data with an existing email
+    wrapper.setData({
+      registerForm: { email: 'john@example.com', password: '12345' }
+    });
+
+    // Trigger register
+    await wrapper.vm.register();
+
+    // Expect no "register" event and alert to be called
+    expect(wrapper.emitted('register')).toBeFalsy();
+    expect(window.alert).toHaveBeenCalledWith('User already exists!');
+  });
+});
+
