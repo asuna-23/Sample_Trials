@@ -1,0 +1,158 @@
+//// includes
+
+describe('Array includes method', () => {
+  it('should return true if the array includes the element', () => {
+    const arr = [1, 2, 3, 4];
+    expect(arr.includes(3)).toBe(true);  // Element 3 is in the array, should return true
+  });
+
+  it('should return false if the array does not include the element', () => {
+    const arr = [1, 2, 3, 4];
+    expect(arr.includes(5)).toBe(false); // Element 5 is not in the array, should return false
+  });
+
+  it('should return false if the string does not include the substring', () => {
+    const str = "Hello, world!";
+    expect(str.includes('hello')).toBe(false);  // Case-sensitive check, should return false
+  });
+});
+
+
+/////some
+
+describe('Array some method', () => {
+  it('should return true if at least one element satisfies the condition', () => {
+    const arr = [1, 2, 3, 4];
+    const result = arr.some(num => num > 3);
+    expect(result).toBe(true);  // At least one element (4) is greater than 3, so it returns true
+  });
+
+  it('should return false if no element satisfies the condition', () => {
+    const arr = [1, 2, 3, 4];
+    const result = arr.some(num => num > 5);
+    expect(result).toBe(false);  // No elements are greater than 5, so it returns false
+  });
+
+  it('should return true if at least one element matches the condition in an array of objects', () => {
+    const arr = [{ name: 'John' }, { name: 'Jane' }];
+    const result = arr.some(person => person.name === 'Jane');
+    expect(result).toBe(true);  // At least one object (Jane) has the name 'Jane', so it returns true
+  });
+});
+
+
+///// map
+
+describe('Array map method', () => {
+  it('should return a new array with the results of calling a function on each element', () => {
+    const arr = [1, 2, 3];
+    const result = arr.map(num => num * 2);
+    expect(result).toEqual([2, 4, 6]);  // Each element is doubled
+  });
+
+  it('should return an empty array if the input is empty', () => {
+    const arr = [];
+    const result = arr.map(num => num * 2);
+    expect(result).toEqual([]);  // No elements to map
+  });
+});
+
+
+//// filter
+
+describe('Array filter method', () => {
+  it('should return a new array with elements that satisfy the condition', () => {
+    const arr = [1, 2, 3, 4, 5];
+    const result = arr.filter(num => num > 3);
+    expect(result).toEqual([4, 5]);  // Only numbers greater than 3
+  });
+
+  it('should return an empty array if no element satisfies the condition', () => {
+    const arr = [1, 2, 3];
+    const result = arr.filter(num => num > 5);
+    expect(result).toEqual([]);  // No numbers greater than 5
+  });
+});
+
+
+//////reduce
+
+describe('Array reduce method', () => {
+  it('should return a single value after reducing the array', () => {
+    const arr = [1, 2, 3, 4];
+    const result = arr.reduce((acc, num) => acc + num, 0);
+    expect(result).toBe(10);  // Sum of all elements
+  });
+
+  it('should return the initial value if the array is empty', () => {
+    const arr = [];
+    const result = arr.reduce((acc, num) => acc + num, 0);
+    expect(result).toBe(0);  // Initial value is 0
+  });
+});
+
+
+///// forEach
+
+describe('Array forEach method', () => {
+  it('should call the provided function on each element', () => {
+    const arr = [1, 2, 3];
+    const mockCallback = jest.fn();
+    arr.forEach(mockCallback);
+    expect(mockCallback).toHaveBeenCalledTimes(3);  // Called once for each element
+    expect(mockCallback).toHaveBeenCalledWith(1, 0, arr);  // Called with first element
+    expect(mockCallback).toHaveBeenCalledWith(2, 1, arr);  // Called with second element
+  });
+
+  it('should not call the function if the array is empty', () => {
+    const arr = [];
+    const mockCallback = jest.fn();
+    arr.forEach(mockCallback);
+    expect(mockCallback).not.toHaveBeenCalled();  // No elements to iterate over
+  });
+});
+
+
+///// find
+
+describe('Array find method', () => {
+  it('should return the first element that satisfies the condition', () => {
+    const arr = [1, 2, 3, 4];
+    const result = arr.find(num => num > 2);
+    expect(result).toBe(3);  // First element greater than 2
+  });
+
+  it('should return undefined if no element satisfies the condition', () => {
+    const arr = [1, 2, 3];
+    const result = arr.find(num => num > 5);
+    expect(result).toBeUndefined();  // No elements greater than 5
+  });
+});
+
+
+///// sort
+
+describe('Array sort method', () => {
+  it('should sort the array in ascending order', () => {
+    const arr = [4, 2, 3, 1];
+    const result = arr.sort((a, b) => a - b);
+    expect(result).toEqual([1, 2, 3, 4]);  // Sorted in ascending order
+  });
+
+  it('should sort the array in descending order', () => {
+    const arr = [1, 2, 3, 4];
+    const result = arr.sort((a, b) => b - a);
+    expect(result).toEqual([4, 3, 2, 1]);  // Sorted in descending order
+  });
+
+  it('should not modify the array if the sort function is not provided', () => {
+    const arr = [4, 2, 3, 1];
+    const result = arr.sort();
+    expect(result).toEqual([1, 2, 3, 4]);  // Default sorting is lexicographical, so this works for numbers too
+  });
+});
+
+
+//////
+
+//
