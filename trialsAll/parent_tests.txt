@@ -1,0 +1,169 @@
+<template>
+  <div>
+    <!-- Show LoginComponent if the user is not logged in -->
+    <LoginComponent
+      v-if="!isLoggedIn"
+      :users="users"
+      @login-success="handleLoginSuccess"
+      @login-failed="handleLoginFailed"
+    />
+
+    <!-- Show the rest of the app when the user is logged in -->
+    <div v-else>
+      <b-navbar toggleable="lg" type="dark" variant="dark" sticky="top" class="text-center">
+        <b-navbar-toggle target="navbar-toggle-collapse">
+          <i class="bi bi-list text-light"></i>
+        </b-navbar-toggle>
+
+        <b-collapse id="navbar-toggle-collapse" is-nav>
+          <b-navbar-nav class="ml-auto">
+            <!-- Navigation links -->
+            <b-navbar-brand v-for="(route, id) in route" :key="id">
+              <common-route-link :is="route.componentName" :key="id" :item="route" />
+            </b-navbar-brand>
+
+            <!-- Right-aligned user actions -->
+            <b-nav-item-dropdown right v-if="loggedInUser">
+              <template #button-content>
+                {{ loggedInUser.email }} <i class="bi bi-person-circle"></i>
+              </template>
+              <b-dropdown-item @click="editPassword">
+                Edit Password
+              </b-dropdown-item>
+              <b-dropdown-item @click="deleteAccount" variant="danger">
+                Delete Account
+              </b-dropdown-item>
+              <b-dropdown-item @click="logout">
+                Logout
+              </b-dropdown-item>
+            </b-nav-item-dropdown>
+          </b-navbar-nav>
+        </b-collapse>
+      </b-navbar>
+
+      <!-- Main app content -->
+      <router-view />
+
+      <!-- Modal for editing the password -->
+      <b-modal id="editPasswordModal" title="Edit Password" v-model="showEditPasswordModal" @ok="updatePassword">
+        <b-form-group label="Current Password" label-for="currentPasswordInput">
+          <b-form-input
+            id="currentPasswordInput"
+            v-model="currentPassword"
+            type="password"
+            placeholder="Enter current password"
+            required
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-group label="New Password" label-for="newPasswordInput">
+          <b-form-input
+            id="newPasswordInput"
+            v-model="newPassword"
+            type="password"
+            placeholder="Enter new password"
+            required
+          ></b-form-input>
+        </b-form-group>
+      </b-modal>
+    </div>
+  </div>
+</template>
+
+<script>
+
+editPassword() {
+    this.showEditPasswordModal = true; // Show the modal
+  },
+
+updatePassword() {
+  // Use find() to get the user object directly
+  const user = this.users.find(u => u.email === this.loggedInUser.email);
+
+  if (user && user.password === this.currentPassword) { // Check if the user exists and the current password matches
+    if (this.newPassword) {
+      user.password = this.newPassword; // Update the password
+      alert('Your password has been updated successfully.');
+      this.currentPassword = ''; // Clear the input fields
+      this.newPassword = '';
+    } else {
+      alert('Please enter a new password.');
+    }
+  } else {
+    alert('The current password you entered is incorrect.');
+  }
+}
+
+
+/* alternative
+  updatePassword() {
+    // Check if the current password is correct
+    const userIndex = this.users.findIndex(u => u.email === this.loggedInUser.email);
+    if (userIndex > -1 && this.users[userIndex].password === this.currentPassword) {
+      if (this.newPassword) {
+        // Update the password
+        this.users[userIndex].password = this.newPassword;
+        alert('Your password has been updated successfully.');
+        this.currentPassword = ''; // Clear the input fields
+        this.newPassword = '';
+      } else {
+        alert('Please enter a new password.');
+      }
+    } else {
+      alert('The current password you entered is incorrect.');
+    }
+  } */
+
+</script>
+
+
+
+//////////////////
+<template>
+  <b-nav-item-dropdown right v-if="loggedInUser">
+    <template #button-content>
+      <span style="color: white;">
+        {{ loggedInUser.email }} <i class="bi bi-person-circle"></i>
+      </span>
+    </template>
+    <b-dropdown-item @click="editPassword" class="text-white">
+      Edit Password
+    </b-dropdown-item>
+    <b-dropdown-item @click="deleteAccount" class="text-white" variant="danger">
+      Delete Account
+    </b-dropdown-item>
+    <b-dropdown-item @click="logout" class="text-white">
+      Logout
+    </b-dropdown-item>
+  </b-nav-item-dropdown>
+</template>
+
+
+///
+<template>
+  <b-nav-item-dropdown right v-if="loggedInUser">
+    <template #button-content>
+      <span class="dropdown-button-content">
+        {{ loggedInUser.email }} <i class="bi bi-person-circle"></i>
+      </span>
+    </template>
+    <b-dropdown-item @click="editPassword" class="text-white">
+      Edit Password
+    </b-dropdown-item>
+    <b-dropdown-item @click="deleteAccount" class="text-white" variant="danger">
+      Delete Account
+    </b-dropdown-item>
+    <b-dropdown-item @click="logout" class="text-white">
+      Logout
+    </b-dropdown-item>
+  </b-nav-item-dropdown>
+</template>
+
+<style scoped>
+.dropdown-button-content {
+  color: white; /* Apply white color */
+}
+</style>
+
+
+//////////////////

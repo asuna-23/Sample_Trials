@@ -1,0 +1,512 @@
+methods: {
+  handleLoginSuccess(user) {
+    this.isLoggedIn = true;
+    this.loggedInUser = user; // Set logged-in user
+  },
+  handleLoginFailed() {
+    this.isLoggedIn = false;
+    this.loggedInUser = null; // Clear logged-in user on failure
+  },
+  logout() {
+    this.isLoggedIn = false;
+    this.loggedInUser = null; // Clear session on logout
+    alert('You have logged out.');
+  },
+  deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      const userIndex = this.users.findIndex(u => u.email === this.loggedInUser.email);
+      if (userIndex > -1) {
+        this.users.splice(userIndex, 1); // Delete the user from the list
+        alert('Your account has been deleted successfully.');
+        this.logout(); // Log the user out after account deletion
+      } else {
+        alert('Error: Unable to find your account.');
+      }
+    }
+  },
+  editPassword() {
+    this.showEditPasswordModal = true; // Show the modal
+  },
+
+updatePassword() {
+  // Use find() to get the user object directly
+  const user = this.users.find(u => u.email === this.loggedInUser.email);
+
+  if (user && user.password === this.currentPassword) { // Check if the user exists and the current password matches
+    if (this.newPassword) {
+      user.password = this.newPassword; // Update the password
+      alert('Your password has been updated successfully.');
+      this.currentPassword = ''; // Clear the input fields
+      this.newPassword = '';
+    } else {
+      alert('Please enter a new password.');
+    }
+  } else {
+    alert('The current password you entered is incorrect.');
+  }
+}
+
+//////////////////
+
+import { shallowMount } from '@vue/test-utils';
+import AppComponent from '@/AppComponent.vue'; // Adjust path to your component
+
+describe('AppComponent.vue Methods', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(AppComponent, {
+      data() {
+        return {
+          isLoggedIn: false,
+          loggedInUser: null,
+          users: [
+            { email: 'john@example.com', password: '12345' },
+            { email: 'jane@example.com', password: 'abcde' }
+          ],
+          currentPassword: '',
+          newPassword: '',
+          showEditPasswordModal: false,
+        };
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // 1. handleLoginSuccess Tests
+  it('should set isLoggedIn to true and loggedInUser when handleLoginSuccess is called with a valid user', () => {
+    const user = { email: 'john@example.com' };
+    wrapper.vm.handleLoginSuccess(user);
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+    expect(wrapper.vm.loggedInUser).toEqual(user);
+  });
+
+  it('should handle null or invalid user in handleLoginSuccess', () => {
+    wrapper.vm.handleLoginSuccess(null);
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // 2. handleLoginFailed Tests
+  it('should reset isLoggedIn and loggedInUser when handleLoginFailed is called', () => {
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.handleLoginFailed();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  it('should work when isLoggedIn is already false and loggedInUser is null', () => {
+    wrapper.setData({ isLoggedIn: false, loggedInUser: null });
+    wrapper.vm.handleLoginFailed();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // 3. logout Tests
+  it('should reset isLoggedIn, loggedInUser and call alert when logout is called', () => {
+    window.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.logout();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  it('should still work if user is already logged out', () => {
+    window.alert = jest.fn();
+    wrapper.vm.logout();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  // 4. deleteAccount Tests
+  it('should delete the account and log out when deleteAccount is confirmed', () => {
+    window.confirm = jest.fn(() => true); // Simulate user clicking "OK"
+    window.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(1); // Should delete 1 user
+    expect(window.alert).toHaveBeenCalledWith('Your account has been deleted successfully.');
+    expect(wrapper.vm.isLoggedIn).toBe(false); // Ensure user is logged out after deletion
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  it('should handle case where user account is not found during deletion', () => {
+    window.confirm = jest.fn(() => true);
+    window.alert = jest.fn();
+    wrapper.setData({ loggedInUser: { email: 'notfound@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(window.alert).toHaveBeenCalledWith('Error: Unable to find your account.');
+    expect(wrapper.vm.users).toHaveLength(2); // User list should remain unchanged
+  });
+
+  it('should not delete the account if deletion is cancelled', () => {
+    window.confirm = jest.fn(() => false); // Simulate user clicking "Cancel"
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(2); // User list should remain the same
+  });
+
+  // 5. editPassword Tests
+  it('should set showEditPasswordModal to true when editPassword is called', () => {
+    wrapper.vm.editPassword();
+    expect(wrapper.vm.showEditPasswordModal).toBe(true);
+  });
+
+  // 6. updatePassword Tests
+  it('should update the password if current password is correct', () => {
+    window.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(wrapper.vm.users[0].password).toBe('newPassword123');
+    expect(window.alert).toHaveBeenCalledWith('Your password has been updated successfully.');
+    expect(wrapper.vm.currentPassword).toBe(''); // Inputs should be cleared
+    expect(wrapper.vm.newPassword).toBe('');
+  });
+
+  it('should show error if current password is incorrect', () => {
+    window.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: 'wrongPassword',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(window.alert).toHaveBeenCalledWith('The current password you entered is incorrect.');
+    expect(wrapper.vm.users[0].password).toBe('12345'); // Password should remain unchanged
+  });
+
+  it('should show error if new password is not entered', () => {
+    window.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: ''
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(window.alert).toHaveBeenCalledWith('Please enter a new password.');
+  });
+});
+
+
+/////////////////////
+
+import { shallowMount } from '@vue/test-utils';
+import AppComponent from '@/AppComponent.vue'; // Adjust path to your component
+
+describe('AppComponent.vue Methods', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(AppComponent, {
+      data() {
+        return {
+          isLoggedIn: false,
+          loggedInUser: null,
+          users: [
+            { email: 'john@example.com', password: '12345' },
+            { email: 'jane@example.com', password: 'abcde' }
+          ],
+          currentPassword: '',
+          newPassword: '',
+          showEditPasswordModal: false,
+        };
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // 1. handleLoginSuccess Tests
+  it('should set isLoggedIn to true and loggedInUser when handleLoginSuccess is called with a valid user', () => {
+    const user = { email: 'john@example.com' };
+    wrapper.vm.handleLoginSuccess(user);
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+    expect(wrapper.vm.loggedInUser).toEqual(user);
+  });
+
+  it('should handle null or invalid user in handleLoginSuccess', () => {
+    wrapper.vm.handleLoginSuccess(null);
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // 2. handleLoginFailed Tests
+  it('should reset isLoggedIn and loggedInUser when handleLoginFailed is called', () => {
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.handleLoginFailed();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  it('should work when isLoggedIn is already false and loggedInUser is null', () => {
+    wrapper.setData({ isLoggedIn: false, loggedInUser: null });
+    wrapper.vm.handleLoginFailed();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // 3. logout Tests
+  it('should reset isLoggedIn, loggedInUser and call alert when logout is called', () => {
+    global.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.logout();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(global.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  it('should still work if user is already logged out', () => {
+    global.alert = jest.fn();
+    wrapper.vm.logout();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(global.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  // 4. deleteAccount Tests
+  it('should delete the account and log out when deleteAccount is confirmed', () => {
+    global.confirm = jest.fn(() => true); // Simulate user clicking "OK"
+    global.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(1); // Should delete 1 user
+    expect(global.alert).toHaveBeenCalledWith('Your account has been deleted successfully.');
+    expect(wrapper.vm.isLoggedIn).toBe(false); // Ensure user is logged out after deletion
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  it('should handle case where user account is not found during deletion', () => {
+    global.confirm = jest.fn(() => true);
+    global.alert = jest.fn();
+    wrapper.setData({ loggedInUser: { email: 'notfound@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(global.alert).toHaveBeenCalledWith('Error: Unable to find your account.');
+    expect(wrapper.vm.users).toHaveLength(2); // User list should remain unchanged
+  });
+
+  it('should not delete the account if deletion is cancelled', () => {
+    global.confirm = jest.fn(() => false); // Simulate user clicking "Cancel"
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(2); // User list should remain the same
+  });
+
+  // 5. editPassword Tests
+  it('should set showEditPasswordModal to true when editPassword is called', () => {
+    wrapper.vm.editPassword();
+    expect(wrapper.vm.showEditPasswordModal).toBe(true);
+  });
+
+  // 6. updatePassword Tests
+  it('should update the password if current password is correct', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(wrapper.vm.users[0].password).toBe('newPassword123');
+    expect(global.alert).toHaveBeenCalledWith('Your password has been updated successfully.');
+    expect(wrapper.vm.currentPassword).toBe(''); // Inputs should be cleared
+    expect(wrapper.vm.newPassword).toBe('');
+  });
+
+  it('should show error if current password is incorrect', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: 'wrongPassword',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(global.alert).toHaveBeenCalledWith('The current password you entered is incorrect.');
+    expect(wrapper.vm.users[0].password).toBe('12345'); // Password should remain unchanged
+  });
+
+  it('should show error if new password is not entered', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: ''
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(global.alert).toHaveBeenCalledWith('Please enter a new password.');
+  });
+});
+
+
+////////////////////
+
+import { shallowMount } from '@vue/test-utils';
+import AppComponent from '@/AppComponent.vue'; // Adjust path to your component file
+
+describe('AppComponent.vue Methods', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(AppComponent, {
+      data() {
+        return {
+          isLoggedIn: false,
+          loggedInUser: null,
+          users: [
+            { email: 'john@example.com', password: '12345' },
+            { email: 'jane@example.com', password: 'abcde' }
+          ],
+          currentPassword: '',
+          newPassword: '',
+          showEditPasswordModal: false,
+        };
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Test for handleLoginSuccess
+  it('should set isLoggedIn to true and loggedInUser when handleLoginSuccess is called', () => {
+    const user = { email: 'john@example.com' };
+    wrapper.vm.handleLoginSuccess(user);
+    expect(wrapper.vm.isLoggedIn).toBe(true);
+    expect(wrapper.vm.loggedInUser).toEqual(user);
+  });
+
+  // Test for handleLoginFailed
+  it('should reset isLoggedIn and loggedInUser when handleLoginFailed is called', () => {
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.handleLoginFailed();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // Test for logout
+  it('should reset isLoggedIn, loggedInUser and call alert when logout is called', () => {
+    global.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+    wrapper.vm.logout();
+    expect(wrapper.vm.isLoggedIn).toBe(false);
+    expect(wrapper.vm.loggedInUser).toBeNull();
+    expect(global.alert).toHaveBeenCalledWith('You have logged out.');
+  });
+
+  // Test for deleteAccount
+  it('should delete the account and log out when deleteAccount is confirmed', () => {
+    global.confirm = jest.fn(() => true); // Simulate user clicking "OK"
+    global.alert = jest.fn();
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(1); // Should delete 1 user
+    expect(global.alert).toHaveBeenCalledWith('Your account has been deleted successfully.');
+    expect(wrapper.vm.isLoggedIn).toBe(false); // Ensure user is logged out after deletion
+    expect(wrapper.vm.loggedInUser).toBeNull();
+  });
+
+  // Test for deleteAccount cancellation
+  it('should not delete the account when deleteAccount is not confirmed', () => {
+    global.confirm = jest.fn(() => false); // Simulate user clicking "Cancel"
+    wrapper.setData({ isLoggedIn: true, loggedInUser: { email: 'john@example.com' } });
+
+    wrapper.vm.deleteAccount();
+
+    expect(wrapper.vm.users).toHaveLength(2); // User list should remain the same
+  });
+
+  // Test for editPassword
+  it('should set showEditPasswordModal to true when editPassword is called', () => {
+    wrapper.vm.editPassword();
+    expect(wrapper.vm.showEditPasswordModal).toBe(true);
+  });
+
+  // Test for updatePassword success
+  it('should update the password if current password is correct', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(wrapper.vm.users[0].password).toBe('newPassword123');
+    expect(global.alert).toHaveBeenCalledWith('Your password has been updated successfully.');
+    expect(wrapper.vm.currentPassword).toBe(''); // Inputs should be cleared
+    expect(wrapper.vm.newPassword).toBe('');
+  });
+
+  // Test for updatePassword failure - wrong current password
+  it('should show error if current password is incorrect', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: 'wrongPassword',
+      newPassword: 'newPassword123'
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(global.alert).toHaveBeenCalledWith('The current password you entered is incorrect.');
+    expect(wrapper.vm.users[0].password).toBe('12345'); // Password should remain unchanged
+  });
+
+  // Test for updatePassword failure - no new password entered
+  it('should show error if new password is not entered', () => {
+    global.alert = jest.fn();
+    wrapper.setData({
+      loggedInUser: { email: 'john@example.com' },
+      currentPassword: '12345',
+      newPassword: ''
+    });
+
+    wrapper.vm.updatePassword();
+
+    expect(global.alert).toHaveBeenCalledWith('Please enter a new password.');
+  });
+});
+
+
+
+
+
+
