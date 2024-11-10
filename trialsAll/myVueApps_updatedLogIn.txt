@@ -164,3 +164,111 @@ export default {
   }
 };
 </script>
+
+///////////// with params id
+
+<template>
+  <div>
+    <!-- Show LoginComponent if the user is not logged in -->
+    <LoginComponent
+      v-if="!isLoggedIn"
+      :users="users"
+      @login-success="handleLoginSuccess"
+      @login-failed="handleLoginFailed"
+    />
+
+    <!-- Show the rest of the app when the user is logged in -->
+    <div v-else>
+      <b-navbar toggleable="lg" type="dark" variant="dark" sticky="top" class="text-center">
+        <!-- Navbar content -->
+        <!-- Passing loggedInUserId as prop to other components (for example, router-view components) -->
+      </b-navbar>
+
+      <!-- Main app content with user ID as a prop -->
+      <router-view :loggedInUserId="loggedInUserId" />
+
+      <!-- Modal for editing the password -->
+      <b-modal id="editPasswordModal" title="Edit Password" v-model="showEditPasswordModal" @ok="updatePassword">
+        <!-- Password fields and logic to update the password -->
+      </b-modal>
+    </div>
+  </div>
+</template>
+
+<script>
+import LoginComponent from './components/LoginComponent.vue';
+
+export default {
+  name: 'App',
+  components: {
+    LoginComponent
+  },
+  data() {
+    return {
+      isLoggedIn: false,
+      loggedInUserId: null, // Store the logged-in user's ID
+      users: [
+        { id: 1, email: 'john@example.com', password: '12345' },
+        { id: 2, email: 'jane@example.com', password: 'abcde' }
+      ] // Sample user data
+    };
+  },
+  methods: {
+    handleLoginSuccess(user) {
+      this.isLoggedIn = true;
+      this.loggedInUserId = user.id; // Store the logged-in user's ID
+    },
+    handleLoginFailed() {
+      this.isLoggedIn = false;
+      this.loggedInUserId = null; // Clear the logged-in user ID
+    },
+    logout() {
+      this.isLoggedIn = false;
+      this.loggedInUserId = null; // Clear the logged-in user ID
+      alert('You have logged out.');
+    }
+  }
+};
+</script>
+
+/// child
+
+<template>
+  <div>
+    <h1>Welcome, User {{ loggedInUserId }}</h1>
+    <!-- Perform user-specific actions based on loggedInUserId -->
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'UserProfile',
+  props: {
+    loggedInUserId: {
+      type: Number,
+      required: true
+    }
+  },
+  methods: {
+    // Example of checking if the logged-in user matches the user profile being displayed
+    checkUserProfile() {
+      if (this.loggedInUserId === this.expectedUserId) {
+        // Perform action for the correct user
+      } else {
+        // Handle error: not the same user
+      }
+    }
+  }
+};
+</script>
+
+
+//// route
+routes: [
+    {
+      path: '/user/:id',
+      name: 'UserProfile',
+      component: UserProfile,
+      props: true // This allows the `id` param to be passed as a prop to the component
+    }
+  ]
