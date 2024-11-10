@@ -1,0 +1,166 @@
+<template>
+  <div>
+    <!-- Show LoginComponent if the user is not logged in -->
+    <LoginComponent
+      v-if="!isLoggedIn"
+      :users="users"
+      @login-success="handleLoginSuccess"
+      @login-failed="handleLoginFailed"
+    />
+
+    <!-- Show the rest of the app when the user is logged in -->
+    <div v-else>
+      <b-navbar toggleable="lg" type="dark" variant="dark" sticky="top" class="text-center">
+        <b-navbar-toggle target="navbar-toggle-collapse">
+          <i class="bi bi-list text-light"></i>
+        </b-navbar-toggle>
+
+        <b-collapse id="navbar-toggle-collapse" is-nav>
+          <b-navbar-nav class="ml-auto">
+            <!-- Navigation links -->
+            <b-navbar-brand v-for="(route, id) in route" :key="id">
+              <common-route-link :is="route.componentName" :key="id" :item="route" />
+            </b-navbar-brand>
+
+            <!-- Right-aligned user actions -->
+            <b-nav-item-dropdown right v-if="loggedInUser">
+              <template #button-content>
+                {{ loggedInUser.email }} <i class="bi bi-person-circle"></i>
+              </template>
+              <b-dropdown-item @click="editPassword">Edit Password</b-dropdown-item>
+              <b-dropdown-item @click="deleteAccount" variant="danger">Delete Account</b-dropdown-item>
+              <b-dropdown-item @click="logout">Logout</b-dropdown-item>
+            </b-nav-item-dropdown>
+          </b-navbar-nav>
+        </b-collapse>
+      </b-navbar>
+
+      <!-- Main app content -->
+      <router-view />
+
+      <!-- Modal for editing the password -->
+      <b-modal id="editPasswordModal" title="Edit Password" v-model="showEditPasswordModal" @ok="updatePassword">
+        <b-form-group label="Current Password" label-for="currentPasswordInput">
+          <b-form-input
+            id="currentPasswordInput"
+            v-model="currentPassword"
+            type="password"
+            placeholder="Enter current password"
+            required
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-group label="New Password" label-for="newPasswordInput">
+          <b-form-input
+            id="newPasswordInput"
+            v-model="newPassword"
+            type="password"
+            placeholder="Enter new password"
+            required
+          ></b-form-input>
+        </b-form-group>
+      </b-modal>
+    </div>
+  </div>
+</template>
+
+<script>
+import LoginComponent from './components/LoginComponent.vue';
+import { ROUTES_PROPERTIES } from './common/recipe/rRoutes';
+import CommonRouteLink from './components/common/CommonRouteLink.vue';
+
+export default {
+  name: 'app',
+  components: {
+    LoginComponent,
+    CommonRouteLink
+  },
+  data() {
+    return {
+      isLoggedIn: false, // Tracks the user's login state
+      route: [...ROUTES_PROPERTIES],
+      loggedInUser: null, // To store logged-in user details
+      users: [] // Users will be loaded from localStorage
+    };
+  },
+  created() {
+    // Load users from localStorage or use default data if empty
+    const storedUsers = localStorage.getItem('users');
+    this.users = storedUsers ? JSON.parse(storedUsers) : [
+      { email: 'john@example.com', password: '12345' },
+      { email: 'jane@example.com', password: 'abcde' }
+    ];
+
+    // Load logged-in user from localStorage
+    const storedLoggedInUser = localStorage.getItem('loggedInUser');
+    if (storedLoggedInUser) {
+      this.loggedInUser = JSON.parse(storedLoggedInUser);
+      this.isLoggedIn = true;
+    }
+  },
+  methods: {
+    handleLoginSuccess(user) {
+      this.isLoggedIn = true;
+      this.loggedInUser = user;
+
+      // Store logged-in user in localStorage
+      localStorage.setItem('loggedInUser', JSON.stringify(user));
+    },
+    handleLoginFailed() {
+      this.isLoggedIn = false;
+      this.loggedInUser = null;
+
+      // Clear logged-in user from localStorage
+      localStorage.removeItem('loggedInUser');
+    },
+    logout() {
+      this.isLoggedIn = false;
+      this.loggedInUser = null;
+
+      // Clear logged-in user from localStorage
+      localStorage.removeItem('loggedInUser');
+      alert('You have logged out.');
+    },
+    deleteAccount() {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        const userIndex = this.users.findIndex(u => u.email === this.loggedInUser.email);
+        if (userIndex > -1) {
+          this.users.splice(userIndex, 1); // Delete the user from the list
+
+          // Update localStorage
+          localStorage.setItem('users', JSON.stringify(this.users));
+
+          alert('Your account has been deleted successfully.');
+          this.logout(); // Log the user out after account deletion
+        } else {
+          alert('Error: Unable to find your account.');
+        }
+      }
+    },
+    editPassword() {
+      this.showEditPasswordModal = true; // Show the modal
+    },
+    updatePassword() {
+      // Use find() to get the user object directly
+      const user = this.users.find(u => u.email === this.loggedInUser.email);
+
+      if (user && user.password === this.currentPassword) { // Check if the user exists and the current password matches
+        if (this.newPassword) {
+          user.password = this.newPassword; // Update the password
+
+          // Update localStorage
+          localStorage.setItem('users', JSON.stringify(this.users));
+
+          alert('Your password has been updated successfully.');
+          this.currentPassword = ''; // Clear the input fields
+          this.newPassword = '';
+        } else {
+          alert('Please enter a new password.');
+        }
+      } else {
+        alert('The current password you entered is incorrect.');
+      }
+    }
+  }
+};
+</script>
